@@ -156,7 +156,7 @@ export function PhotoGallery({ photos, selectable = true }: { photos: Photo[]; s
       </AlertDialog>
 
       <Dialog open={current !== null} onOpenChange={(o) => !o && setViewIndex(null)}>
-        <DialogContent className="max-h-[100dvh] w-full max-w-4xl gap-0 overflow-y-auto border-0 bg-card p-0 sm:rounded-2xl">
+        <DialogContent className="max-h-[100dvh] w-full max-w-4xl gap-0 [&>button:last-child]:hidden overflow-y-auto border-0 bg-card p-0 sm:rounded-2xl">
           {current && (
             <PhotoViewer
               photo={current}
