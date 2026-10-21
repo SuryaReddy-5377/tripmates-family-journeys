@@ -10,7 +10,19 @@ import {
 import { parties, people } from "./sample-data";
 import type { AppState } from "./store";
 import { tripPartyIds } from "./store";
-import type { ExpenseCategory, Party, Trip, TripStatus } from "./types";
+import type { ExpenseCategory, Party, Trip, TripStatus, Expense, Settlement } from "./types";
+import type { Paise, PartyBalance, Transfer } from "./ledger";
+
+export interface TripLedgerResult {
+  trip: Trip;
+  expenses: Expense[];
+  settlements: Settlement[];
+  balances: PartyBalance[];
+  transfers: Transfer[];
+  total: Paise;
+  byCategory: Record<ExpenseCategory, Paise>;
+  outstanding: Paise;
+}
 
 export function todayISO(now = new Date()) {
   return format(now, "yyyy-MM-dd");
@@ -38,7 +50,8 @@ export function formatDateRange(start: string, end: string) {
 }
 
 export function daysUntil(date: string, now = new Date()) {
-  const ms = parseISO(date).getTime() - parseISO(todayISO(now)).getTime();
+  const [y1, m1, d1] = date.split("-").map(Number);
+  const ms = Date.UTC(y1, m1 - 1, d1) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round(ms / 86_400_000);
 }
 
@@ -78,10 +91,15 @@ export const categoryLabel: Record<ExpenseCategory, string> = {
   other: "Other",
 };
 
-export function tripLedger(state: AppState, tripId: string) {
+const ledgerMemo = new Map<string, TripLedgerResult>();
+
+export function tripLedger(state: AppState, tripId: string): TripLedgerResult {
   const trip = state.trips.find((t) => t.id === tripId)!;
   const expenses = state.expenses.filter((e) => e.tripId === tripId);
   const settlements = state.settlements.filter((s) => s.tripId === tripId);
+  const cacheKey = `${tripId}:${trip?.budget}:${expenses.length}:${settlements.length}:${expenses[expenses.length - 1]?.id ?? ""}:${settlements[settlements.length - 1]?.id ?? ""}`;
+  const hit = ledgerMemo.get(cacheKey);
+  if (hit) return hit;
   const partyIds = Array.from(
     new Set([...tripPartyIds(trip), ...expenses.flatMap((e) => [e.paidBy, ...e.participants]), ...settlements.flatMap((s) => [s.from, s.to])]),
   );
@@ -90,7 +108,9 @@ export function tripLedger(state: AppState, tripId: string) {
   const total = totalSpent(expenses);
   const byCategory = totalsByCategory(expenses);
   const outstanding = balances.reduce((s, b) => s + (b.net > 0 ? b.net : 0), 0);
-  return { trip, expenses, settlements, balances, transfers, total, byCategory, outstanding };
+  const result = { trip, expenses, settlements, balances, transfers, total, byCategory, outstanding };
+  ledgerMemo.set(cacheKey, result);
+  return result;
 }
 
 export function expensesCsv(state: AppState, tripId: string): string {

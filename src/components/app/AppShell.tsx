@@ -29,6 +29,44 @@ import { cn } from "@/lib/utils";
 import { useAppState, switchActiveFamily, syncOfflineQueue } from "@/lib/store";
 import { ResponsiveModal } from "./ResponsiveModal";
 import { PartyAvatar } from "./bits";
+import { useTranslation } from "@/lib/i18n";
+
+export function LanguageSwitcher({ className }: { className?: string }) {
+  const { lang, setLanguage } = useTranslation();
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center rounded-xl border border-border/80 bg-secondary/80 p-0.5 text-xs font-semibold shadow-xs select-none",
+        className,
+      )}
+    >
+      <button
+        onClick={() => setLanguage("en")}
+        type="button"
+        className={cn(
+          "rounded-lg px-2 py-0.5 text-[10px] font-bold transition-all",
+          lang === "en"
+            ? "bg-primary text-primary-foreground shadow-xs"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        EN
+      </button>
+      <button
+        onClick={() => setLanguage("te")}
+        type="button"
+        className={cn(
+          "rounded-lg px-2 py-0.5 text-[10px] font-bold transition-all",
+          lang === "te"
+            ? "bg-primary text-primary-foreground shadow-xs"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        తెలుగు
+      </button>
+    </div>
+  );
+}
 
 export function Logo({ className }: { className?: string }) {
   return (
@@ -50,6 +88,7 @@ export function Logo({ className }: { className?: string }) {
 }
 
 export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { trips } = useAppState();
   const liveTrips = trips.filter((t) => !t.archived);
@@ -61,7 +100,7 @@ export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpen
   };
 
   return (
-    <ResponsiveModal open={open} onOpenChange={onOpenChange} title="Quick Actions">
+    <ResponsiveModal open={open} onOpenChange={onOpenChange} title={t("quickActions")}>
       <div className="grid gap-2.5 p-1">
         <button
           onClick={() => go("/trips/new")}
@@ -71,7 +110,7 @@ export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpen
             <Compass className="h-5 w-5" />
           </span>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-foreground text-sm">Create New Trip</div>
+            <div className="font-semibold text-foreground text-sm">{t("createTripBtn")}</div>
             <div className="text-xs text-muted-foreground truncate">Destination, dates, budget and invite family</div>
           </div>
         </button>
@@ -86,7 +125,7 @@ export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpen
                 <Receipt className="h-5 w-5" />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground text-sm">Record Expense</div>
+                <div className="font-semibold text-foreground text-sm">{t("addExpenseBtn")}</div>
                 <div className="text-xs text-muted-foreground truncate">Split fairly for {activeTrip.name}</div>
               </div>
             </button>
@@ -99,7 +138,7 @@ export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpen
                 <MapPin className="h-5 w-5" />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground text-sm">Add Route Stop</div>
+                <div className="font-semibold text-foreground text-sm">{t("addStop")}</div>
                 <div className="text-xs text-muted-foreground truncate">Search place or pin on offline map</div>
               </div>
             </button>
@@ -112,7 +151,7 @@ export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpen
                 <Clock className="h-5 w-5" />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground text-sm">Add Itinerary Activity</div>
+                <div className="font-semibold text-foreground text-sm">{t("addActivityBtn")}</div>
                 <div className="text-xs text-muted-foreground truncate">Schedule day event with timing & booking</div>
               </div>
             </button>
@@ -125,7 +164,7 @@ export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpen
                 <DownloadCloud className="h-5 w-5" />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground text-sm">Download Offline Map</div>
+                <div className="font-semibold text-foreground text-sm">{t("offlineMaps")}</div>
                 <div className="text-xs text-muted-foreground truncate">Save area tiles for navigation without Wi-Fi</div>
               </div>
             </button>
@@ -137,6 +176,7 @@ export function QuickActionModal({ open, onOpenChange }: { open: boolean; onOpen
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const [quickOpen, setQuickOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -156,44 +196,44 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   const navItems = [
-    { to: "/dashboard", label: "Dashboard", icon: Home },
-    { to: "/trips", label: "My Trips", icon: Compass },
+    { to: "/dashboard", label: t("navDashboard"), icon: Home },
+    { to: "/trips", label: t("navTrips"), icon: Compass },
     {
       to: activeTrip ? `/trips/${activeTrip.id}/map` : "/trips",
-      label: "Explore Map",
+      label: t("navMap"),
       icon: MapPinned,
       badge: "Offline",
     },
     {
       to: activeTrip ? `/trips/${activeTrip.id}/itinerary` : "/trips",
-      label: "Itinerary",
+      label: t("navItinerary"),
       icon: CalendarCheck,
     },
     {
       to: activeTrip ? `/trips/${activeTrip.id}/expenses` : "/trips",
-      label: "Expenses",
+      label: t("navExpenses"),
       icon: Receipt,
     },
     {
       to: activeTrip ? `/trips/${activeTrip.id}/budget` : "/trips",
-      label: "Trip Budget",
+      label: t("navBudget"),
       icon: PieChart,
     },
     {
       to: activeTrip ? `/trips/${activeTrip.id}/checklist` : "/trips",
-      label: "Checklist",
+      label: t("navChecklist"),
       icon: CheckSquare,
     },
-    { to: "/family", label: "Family Members", icon: Users },
+    { to: "/family", label: t("navFamily"), icon: Users },
     {
       to: "/notifications",
-      label: "Notifications",
+      label: t("navNotifications"),
       icon: Bell,
       count: unreadNotifs,
     },
-    { to: "/settings", label: "Settings & Offline", icon: Settings },
+    { to: "/settings", label: t("navSettings"), icon: Settings },
     ...(currentUser.role === "super_admin"
-      ? [{ to: "/admin", label: "Super Admin", icon: ShieldCheck, admin: true }]
+      ? [{ to: "/admin", label: t("navSuperAdmin"), icon: ShieldCheck, admin: true }]
       : []),
   ];
 
@@ -201,7 +241,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col antialiased">
       {/* DESKTOP SIDEBAR */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border/80 bg-sidebar px-4 py-5 lg:flex select-none">
-        <Logo className="px-1" />
+        <div className="flex items-center justify-between px-1">
+          <Logo />
+          <LanguageSwitcher />
+        </div>
 
         {/* FAMILY WORKSPACE PICKER */}
         <div className="mt-5 rounded-2xl border border-border/80 bg-card/60 p-2.5 backdrop-blur-sm">
@@ -231,7 +274,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-soft hover:bg-primary/95 transition-all active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" />
-          Quick Action
+          {t("quickActions")}
         </button>
 
         {/* NAVIGATION LINKS */}
@@ -283,7 +326,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
               />
               <span className="font-semibold text-foreground">
-                {isOnline ? "Online Mode" : "Offline Ready"}
+                {isOnline ? t("online") : t("offline")}
               </span>
             </div>
             {pendingOfflineActionsCount > 0 && (
@@ -322,7 +365,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* MOBILE TOP BAR */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/80 bg-background/95 px-4 backdrop-blur-md lg:hidden">
         <Logo />
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <div
             className={cn(
               "flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border",
@@ -332,7 +376,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
           >
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-            <span>{isOnline ? "Online" : "Offline"}</span>
+            <span>{isOnline ? t("online") : t("offline")}</span>
           </div>
 
           <button
@@ -358,17 +402,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-50 flex flex-col bg-background/98 p-5 backdrop-blur-lg lg:hidden fade-up">
           <div className="flex items-center justify-between border-b border-border/80 pb-4">
             <Logo />
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-foreground"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* FAMILY SWITCHER MOBILE */}
           <div className="mt-4 rounded-xl border border-border/80 bg-card p-3">
-            <div className="text-[11px] font-semibold uppercase text-muted-foreground mb-1">Active Family Workspace</div>
+            <div className="text-[11px] font-semibold uppercase text-muted-foreground mb-1">{t("switchFamily")}</div>
             <select
               value={activeFamilyId}
               onChange={(e) => {
@@ -420,7 +467,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 onClick={() => setMobileMenuOpen(false)}
                 className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground"
               >
-                Settings
+                {t("navSettings")}
               </Link>
             </div>
           </div>
@@ -443,7 +490,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           activeProps={{ className: "text-primary font-bold" }}
         >
           <Home className="h-5 w-5" />
-          <span>Home</span>
+          <span>{t("navDashboard")}</span>
         </Link>
 
         <Link
@@ -452,7 +499,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           activeProps={{ className: "text-primary font-bold" }}
         >
           <Compass className="h-5 w-5" />
-          <span>Trips</span>
+          <span>{t("navTrips")}</span>
         </Link>
 
         <Link
@@ -461,7 +508,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           activeProps={{ className: "text-primary font-bold" }}
         >
           <MapPinned className="h-5 w-5" />
-          <span>Map</span>
+          <span>{t("navMap")}</span>
         </Link>
 
         <Link
@@ -470,7 +517,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           activeProps={{ className: "text-primary font-bold" }}
         >
           <Receipt className="h-5 w-5" />
-          <span>Expenses</span>
+          <span>{t("navExpenses")}</span>
         </Link>
 
         <button
@@ -478,7 +525,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <Menu className="h-5 w-5" />
-          <span>More</span>
+          <span>{t("actions")}</span>
         </button>
       </nav>
 

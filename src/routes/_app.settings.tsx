@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Sparkles,
   Database,
+  Languages,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -34,18 +35,20 @@ import {
 import type { OfflineRegion } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PartyAvatar } from "@/components/app/bits";
+import { useTranslation, LANGUAGES, type Language } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({
     meta: [
       { title: "Profile & Settings — TripMates 2.0" },
-      { name: "description", content: "User profile, family workspaces, offline maps cache management and preferences." },
+      { name: "description", content: "User profile, family workspaces, language preferences, and offline storage." },
     ],
   }),
   component: SettingsRoute,
 });
 
 function SettingsRoute() {
+  const { t, lang, setLanguage, isTelugu } = useTranslation();
   const { currentUser, families, activeFamilyId, isOnline, pendingOfflineActionsCount } = useAppState();
 
   const [storageInfo, setStorageInfo] = useState<StorageEstimateResult | null>(null);
@@ -105,9 +108,9 @@ function SettingsRoute() {
       {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border/80 bg-card p-5 shadow-soft">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Profile & Settings</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">{t("settingsTitle")}</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage your account, family workspaces, and offline storage
+            {t("settingsSubtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -120,8 +123,48 @@ function SettingsRoute() {
             )}
           >
             {isOnline ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-            <span>{isOnline ? "Online Mode" : "Offline Mode"}</span>
+            <span>{isOnline ? t("online") : t("offline")}</span>
           </span>
+        </div>
+      </div>
+
+      {/* LANGUAGE PREFERENCE CARD */}
+      <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-soft space-y-4">
+        <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+          <Languages className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+          <span>{t("languageSection")}</span>
+        </h2>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {t("languageHelp")}
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {LANGUAGES.map((item) => {
+            const isSelected = lang === item.code;
+            return (
+              <button
+                key={item.code}
+                onClick={() => {
+                  setLanguage(item.code);
+                  toast.success(item.code === "te" ? "భాషను తెలుగుగా మార్చడం జరిగింది" : "Language set to English");
+                }}
+                className={cn(
+                  "flex items-center justify-between rounded-2xl border p-4 text-left transition-all",
+                  isSelected
+                    ? "border-primary bg-primary/10 ring-2 ring-primary/20 shadow-sm"
+                    : "border-border/80 bg-secondary/30 hover:bg-secondary/60",
+                )}
+              >
+                <div>
+                  <div className="font-bold text-sm text-foreground">{item.nativeName}</div>
+                  <div className="text-xs text-muted-foreground">{item.label}</div>
+                </div>
+                {isSelected && (
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -293,7 +336,7 @@ function SettingsRoute() {
       <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-soft space-y-4">
         <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
           <Building className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-          <span>Family Workspaces</span>
+          <span>{t("familyTitle")}</span>
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -318,7 +361,7 @@ function SettingsRoute() {
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">{fam.city}</div>
                   <div className="mt-2 text-xs font-mono bg-secondary/80 rounded-lg p-1.5 flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">Invite Code:</span>
+                    <span className="text-[11px] text-muted-foreground">{t("inviteCode")}:</span>
                     <span className="font-bold text-foreground">{fam.inviteCode}</span>
                   </div>
                 </div>
@@ -330,7 +373,7 @@ function SettingsRoute() {
                     size="sm"
                     className="mt-3 rounded-xl text-xs font-semibold"
                   >
-                    Switch to Workspace
+                    {t("switchFamily")}
                   </Button>
                 )}
               </div>

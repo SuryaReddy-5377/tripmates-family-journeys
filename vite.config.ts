@@ -12,4 +12,51 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      include: [
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+        "@tanstack/react-router",
+        "@tanstack/react-query",
+        "leaflet",
+        "idb",
+        "lucide-react",
+        "clsx",
+        "tailwind-merge",
+        "date-fns",
+        "sonner",
+      ],
+    },
+    server: {
+      warmup: {
+        clientFiles: [
+          "./src/routes/__root.tsx",
+          "./src/routes/_app.tsx",
+          "./src/routes/_app.dashboard.tsx",
+          "./src/routes/_app.trips.index.tsx",
+          "./src/components/app/AppShell.tsx",
+          "./src/lib/store.ts",
+          "./src/lib/i18n.ts",
+        ],
+      },
+    },
+    build: {
+      target: "esnext",
+      cssMinify: true,
+      minify: "esbuild",
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules/leaflet")) return "vendor-leaflet";
+            if (id.includes("node_modules/recharts")) return "vendor-recharts";
+            if (id.includes("node_modules/lucide-react")) return "vendor-lucide";
+            if (id.includes("node_modules/@radix-ui")) return "vendor-radix";
+            return undefined;
+          },
+        },
+      },
+    },
+  },
 });

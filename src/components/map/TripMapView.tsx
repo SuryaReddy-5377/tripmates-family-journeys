@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
+import type L from "leaflet";
 import {
   Compass,
   DownloadCloud,
@@ -21,14 +21,16 @@ import {
   HardDrive,
   CheckCircle2,
   AlertCircle,
+  Car,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppState, addStop, updateStop, deleteStop, reorderStops } from "@/lib/store";
-import { OfflineTileLayer, downloadRegionTiles, CARTO_VOYAGER_URL, type DownloadProgress } from "@/lib/offline-tile-layer";
+import { createOfflineTileLayer, downloadRegionTiles, CARTO_VOYAGER_URL, type DownloadProgress } from "@/lib/offline-tile-layer";
 import { checkStorageEstimate, getDownloadedRegions, deleteDownloadedRegion, type StorageEstimateResult } from "@/lib/offline-storage";
 import type { RouteStop, Trip, OfflineRegion } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ResponsiveModal } from "@/components/app/ResponsiveModal";
+import { useTranslation } from "@/lib/i18n";
 
 interface TripMapViewProps {
   trip: Trip;
@@ -36,12 +38,20 @@ interface TripMapViewProps {
   initialDownloadModal?: boolean;
 }
 
+// In-memory route cache to make switching between days instant (0ms delay)
+const osrmRouteCache = new Map<string, { distanceKm: string; durationMin: number; coordinates: [number, number][] }>();
+
 export function TripMapView({ trip, initialAddStop, initialDownloadModal }: TripMapViewProps) {
+  const { t, isTelugu } = useTranslation();
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const routeLayerRef = useRef<L.Polyline | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const gpsMarkerRef = useRef<L.Marker | null>(null);
+
+  const [mapReady, setMapReady] = useState(false);
+  const [routeStats, setRouteStats] = useState<{ distanceKm: string; durationMin: number } | null>(null);
 
   const { stops, savedRoutes, isOnline } = useAppState();
   const tripStops = stops
@@ -85,40 +95,54 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
     refreshStorage();
   }, []);
 
-  // Initialize Map
+  // Initialize Map dynamically (safe on client only, zero SSR crashes)
   useEffect(() => {
-    if (typeof window === "undefined" || !mapContainerRef.current || mapRef.current) return;
+    let isMounted = true;
 
-    // Default center on destination or stops
-    const defaultCenter: [number, number] = tripStops.length > 0
-      ? [tripStops[0].lat, tripStops[0].lng]
-      : [26.9124, 75.7873]; // Jaipur fallback
+    async function initLeaflet() {
+      if (typeof window === "undefined" || !mapContainerRef.current || mapRef.current) return;
 
-    const map = L.map(mapContainerRef.current, {
-      center: defaultCenter,
-      zoom: 13,
-      zoomControl: false,
-    });
+      const L = await import("leaflet");
+      if (!isMounted || !mapContainerRef.current) return;
+      leafletRef.current = L;
 
-    L.control.zoom({ position: "bottomright" }).addTo(map);
+      // Default center on destination or stops
+      const defaultCenter: [number, number] =
+        tripStops.length > 0 ? [tripStops[0].lat, tripStops[0].lng] : [26.9124, 75.7873]; // Jaipur fallback
 
-    // Custom offline-capable tile layer
-    const tileLayer = new OfflineTileLayer(CARTO_VOYAGER_URL);
-    tileLayer.addTo(map);
+      const map = L.map(mapContainerRef.current, {
+        center: defaultCenter,
+        zoom: 13,
+        zoomControl: false,
+      });
 
-    markersLayerRef.current = L.layerGroup().addTo(map);
-    mapRef.current = map;
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      // Custom offline-capable tile layer with CARTO / OSM attribution
+      const tileLayer = createOfflineTileLayer(L, CARTO_VOYAGER_URL);
+      tileLayer.addTo(map);
+
+      markersLayerRef.current = L.layerGroup().addTo(map);
+      mapRef.current = map;
+      setMapReady(true);
+    }
+
+    initLeaflet();
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      isMounted = false;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, []);
 
-  // Update Markers and Route Lines
+  // Update Markers and Route Lines with real OSRM road geometry
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !markersLayerRef.current) return;
+    const L = leafletRef.current;
+    if (!map || !L || !markersLayerRef.current) return;
 
     markersLayerRef.current.clearLayers();
     if (routeLayerRef.current) {
@@ -126,7 +150,10 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
       routeLayerRef.current = null;
     }
 
-    if (filteredStops.length === 0) return;
+    if (filteredStops.length === 0) {
+      setRouteStats(null);
+      return;
+    }
 
     const latLngs: [number, number][] = [];
 
@@ -147,7 +174,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
 
       const popupHtml = `
         <div class="p-3 text-slate-900 min-w-[200px]">
-          <div class="text-[11px] font-bold uppercase tracking-wider text-teal-600 mb-0.5">Day ${stop.dayNumber} • Stop ${index + 1}</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-teal-600 mb-0.5">${t("day")} ${stop.dayNumber} • Stop ${index + 1}</div>
           <div class="font-bold text-sm mb-1">${stop.name}</div>
           ${stop.address ? `<div class="text-xs text-slate-500 mb-1.5">${stop.address}</div>` : ""}
           ${stop.plannedArrival ? `<div class="flex items-center gap-1 text-xs text-slate-600 mb-1 font-semibold"><span class="text-teal-600 font-bold">ETA:</span> ${stop.plannedArrival}</div>` : ""}
@@ -160,16 +187,77 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
       markersLayerRef.current?.addLayer(marker);
     });
 
-    // Draw route polyline
+    let cancelled = false;
+
+    // Draw route: Attempt real road-routing geometry using free OSRM driving API
     if (latLngs.length > 1) {
-      const polyline = L.polyline(latLngs, {
-        color: "#0d9488",
-        weight: 4,
-        opacity: 0.85,
-        dashArray: "6, 8",
-        lineCap: "round",
-      }).addTo(map);
-      routeLayerRef.current = polyline;
+      const coordsString = filteredStops.map((s) => `${s.lng},${s.lat}`).join(";");
+
+      const applyRoute = (roadCoords: [number, number][], distanceKm: string, durationMin: number) => {
+        setRouteStats({ distanceKm, durationMin });
+        if (!map) return;
+        if (routeLayerRef.current) {
+          map.removeLayer(routeLayerRef.current);
+        }
+        const polyline = L.polyline(roadCoords, {
+          color: "#0d9488",
+          weight: 4.5,
+          opacity: 0.9,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(map);
+        routeLayerRef.current = polyline;
+      };
+
+      // Check cache first for 0ms instantaneous render
+      const cached = osrmRouteCache.get(coordsString);
+      if (cached) {
+        applyRoute(cached.coordinates, cached.distanceKm, cached.durationMin);
+      } else {
+        const fetchRoadRoute = async () => {
+          try {
+            const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+            const resp = await fetch(osrmUrl);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data.routes && data.routes[0] && !cancelled && mapRef.current) {
+                const roadCoordinates: [number, number][] = data.routes[0].geometry.coordinates.map(
+                  ([lng, lat]: [number, number]) => [lat, lng],
+                );
+                const distanceKm = (data.routes[0].distance / 1000).toFixed(1);
+                const durationMin = Math.round(data.routes[0].duration / 60);
+
+                osrmRouteCache.set(coordsString, {
+                  distanceKm,
+                  durationMin,
+                  coordinates: roadCoordinates,
+                });
+
+                applyRoute(roadCoordinates, distanceKm, durationMin);
+                return;
+              }
+            }
+          } catch {
+            // Graceful fallback on network failure or offline mode
+          }
+
+          // Direct straight-line fallback if OSRM unavailable
+          if (!cancelled && mapRef.current) {
+            const polyline = L.polyline(latLngs, {
+              color: "#0d9488",
+              weight: 3.5,
+              opacity: 0.8,
+              dashArray: "6, 8",
+              lineCap: "round",
+            }).addTo(mapRef.current);
+            routeLayerRef.current = polyline;
+          }
+        };
+
+        fetchRoadRoute();
+      }
+    } else {
+      setRouteStats(null);
     }
 
     // Fit map bounds to stops
@@ -177,10 +265,17 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
       const bounds = L.latLngBounds(latLngs);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
-  }, [filteredStops, selectedStopId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filteredStops, selectedStopId, mapReady]);
 
   // Live GPS Tracking
   const toggleLocation = () => {
+    const L = leafletRef.current;
+    if (!L) return;
+
     if (isLocating) {
       setIsLocating(false);
       if (gpsMarkerRef.current && mapRef.current) {
@@ -301,7 +396,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
     reorderStops(trip.id, list.map((s) => s.id));
   };
 
-  // Open in Google Maps
+  // Open in Google Maps Turn-by-Turn
   const handleOpenGoogleMaps = () => {
     if (filteredStops.length === 0) return;
     if (filteredStops.length === 1) {
@@ -327,7 +422,6 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
       return;
     }
 
-    // Compute bounding box around stops with safety margin
     const lats = filteredStops.map((s) => s.lat);
     const lngs = filteredStops.map((s) => s.lng);
     const pad = 0.08; // ~8-10 km margin
@@ -351,7 +445,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
           destination: trip.destination,
           bounds,
           minZoom: 11,
-          maxZoom: 14, // Perfect balance for city/district roads ~10-25 MB
+          maxZoom: 14,
         },
         (progress) => {
           setDownloadProgress(progress);
@@ -399,7 +493,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
                 selectedDay === "all" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              All Days ({tripStops.length})
+              {t("allDays")} ({tripStops.length})
             </button>
             {days.map((d) => (
               <button
@@ -410,7 +504,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
                   selectedDay === d ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                Day {d}
+                {t("day")} {d}
               </button>
             ))}
           </div>
@@ -427,7 +521,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
               )}
             >
               {isOnline ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-              <span>{isOnline ? "Live Map" : "Offline Storage"}</span>
+              <span>{isOnline ? t("online") : t("offline")}</span>
             </div>
 
             {/* DOWNLOAD REGION BUTTON */}
@@ -436,13 +530,13 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
               className="flex items-center gap-1.5 rounded-2xl bg-card/95 border border-border px-3 py-1.5 text-xs font-bold text-foreground shadow-card hover:bg-secondary transition-all"
             >
               <DownloadCloud className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
-              <span>Offline Cache</span>
+              <span>{t("offlineMaps")}</span>
             </button>
 
             {/* LOCATE ME BUTTON */}
             <button
               onClick={toggleLocation}
-              title="Show my current GPS position"
+              title={t("liveGPS")}
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-2xl border shadow-card backdrop-blur-md transition-all",
                 isLocating
@@ -455,6 +549,20 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
           </div>
         </div>
 
+        {/* ROAD ROUTE STATS OVERVIEW BANNER */}
+        {routeStats && (
+          <div className="absolute top-16 left-4 z-[400] flex items-center gap-3 rounded-2xl bg-slate-900/90 text-white px-3.5 py-1.5 text-xs font-semibold shadow-card backdrop-blur-md border border-slate-700">
+            <span className="flex items-center gap-1.5 text-teal-300 font-bold">
+              <Car className="h-3.5 w-3.5" />
+              {routeStats.distanceKm} km
+            </span>
+            <span className="text-slate-400">•</span>
+            <span className="text-slate-200">
+              ~{routeStats.durationMin} {t("countdownMins")} {t("estDriveTime")}
+            </span>
+          </div>
+        )}
+
         {/* LEAFLET MAP ELEMENT */}
         <div ref={mapContainerRef} className="w-full flex-1 min-h-[480px] lg:min-h-[650px] z-10" />
 
@@ -466,7 +574,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
               className="flex items-center gap-2 rounded-2xl bg-slate-900/95 text-white px-4 py-2 text-xs font-bold shadow-card border border-slate-700 hover:bg-slate-800 backdrop-blur-md transition-all active:scale-[0.98]"
             >
               <Navigation className="h-4 w-4 text-teal-400" />
-              <span>Navigate Route in Google Maps</span>
+              <span>{t("navigateInGoogleMaps")}</span>
               <ExternalLink className="h-3 w-3 opacity-70" />
             </button>
           </div>
@@ -477,9 +585,9 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
       <div className="lg:col-span-4 flex flex-col rounded-3xl border border-border/80 bg-card p-5 shadow-soft">
         <div className="flex items-center justify-between pb-3 border-b border-border/80">
           <div>
-            <h2 className="font-display text-base font-bold text-foreground">Route Stops</h2>
+            <h2 className="font-display text-base font-bold text-foreground">{t("mapTitle")}</h2>
             <p className="text-xs text-muted-foreground">
-              {filteredStops.length} stop{filteredStops.length === 1 ? "" : "s"} planned
+              {filteredStops.length} {t("day")} {filteredStops.length === 1 ? "" : "s"}
             </p>
           </div>
           <Button
@@ -488,7 +596,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
             className="rounded-xl gap-1 text-xs font-bold"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Stop
+            {t("addStop")}
           </Button>
         </div>
 
@@ -497,8 +605,8 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
           {filteredStops.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
               <MapPin className="mx-auto h-8 w-8 opacity-40 mb-2" />
-              <div className="text-sm font-semibold">No stops on this day</div>
-              <div className="text-xs text-muted-foreground mt-1">Add places to visit or download the map region.</div>
+              <div className="text-sm font-semibold">{t("noUpcomingActivities")}</div>
+              <div className="text-xs text-muted-foreground mt-1">{t("mapSubtitle")}</div>
             </div>
           ) : (
             filteredStops.map((stop, idx) => (
@@ -526,7 +634,7 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
                   <div className="flex items-center justify-between gap-1">
                     <span className="font-semibold text-xs text-foreground truncate">{stop.name}</span>
                     <span className="text-[10px] font-bold text-muted-foreground shrink-0">
-                      Day {stop.dayNumber}
+                      {t("day")} {stop.dayNumber}
                     </span>
                   </div>
 
@@ -583,181 +691,167 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
         </div>
       </div>
 
-      {/* ADD STOP MODAL */}
-      <ResponsiveModal open={addStopOpen} onOpenChange={setAddStopOpen} title="Add Trip Stop">
-        <div className="grid gap-4 p-1">
+      {/* ADD STOP MODAL WITH NOMINATIM SEARCH */}
+      <ResponsiveModal open={addStopOpen} onOpenChange={setAddStopOpen} title={t("addStop")}>
+        <div className="space-y-4 p-1">
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">Search Place or Landmark</label>
+            <label className="text-xs font-bold text-foreground block mb-1">{t("searchPlaces")}</label>
             <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  placeholder="e.g. Hawa Mahal, Amer Fort, Palolem Beach"
-                  className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              </div>
-              <Button onClick={handleSearch} disabled={isSearching} size="sm" className="rounded-xl text-xs font-bold">
-                {isSearching ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : "Search"}
+              <input
+                type="text"
+                placeholder={t("searchPlaces")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <Button onClick={handleSearch} disabled={isSearching} className="rounded-xl text-xs font-semibold gap-1">
+                {isSearching ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                {t("search")}
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">Trip Day</label>
-              <select
-                value={newStopDay}
-                onChange={(e) => setNewStopDay(Number(e.target.value))}
-                className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
-              >
-                {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                  <option key={d} value={d}>
-                    Day {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">Arrival Time (ETA)</label>
-              <input
-                type="time"
-                value={newStopArrival}
-                onChange={(e) => setNewStopArrival(e.target.value)}
-                className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">Notes / Instructions</label>
-            <input
-              type="text"
-              value={newStopNotes}
-              onChange={(e) => setNewStopNotes(e.target.value)}
-              placeholder="e.g. Meet guide at east gate, sunset photography"
-              className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
-            />
-          </div>
-
-          {/* SEARCH RESULTS LIST */}
+          {/* SEARCH RESULTS */}
           {searchResults.length > 0 && (
-            <div className="rounded-2xl border border-border/80 bg-secondary/30 p-2 space-y-1.5 max-h-48 overflow-y-auto">
-              <div className="text-[11px] font-semibold text-muted-foreground px-2">Select matching location:</div>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto rounded-xl border border-border p-2 bg-secondary/30">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1 block">
+                Matching Places
+              </span>
               {searchResults.map((res, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => handleSelectSearchResult(res)}
-                  className="w-full flex items-start gap-2 rounded-xl p-2 text-left hover:bg-card border border-transparent hover:border-border/80 transition-all"
+                  className="w-full text-left p-2 rounded-lg hover:bg-card border border-transparent hover:border-border transition-all flex items-start gap-2"
                 >
                   <MapPin className="h-4 w-4 text-teal-600 shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <div className="font-semibold text-xs text-foreground truncate">{res.name}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-xs text-foreground truncate">{res.name}</div>
                     <div className="text-[10px] text-muted-foreground truncate">{res.address}</div>
                   </div>
                 </button>
               ))}
             </div>
           )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-foreground block mb-1">{t("day")}</label>
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={newStopDay}
+                onChange={(e) => setNewStopDay(parseInt(e.target.value) || 1)}
+                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-foreground block mb-1">{t("arrivalTime")}</label>
+              <input
+                type="text"
+                placeholder="10:30 AM"
+                value={newStopArrival}
+                onChange={(e) => setNewStopArrival(e.target.value)}
+                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-foreground block mb-1">{t("notes")}</label>
+            <input
+              type="text"
+              placeholder="E.g. Tickets booked, enter via Gate 2"
+              value={newStopNotes}
+              onChange={(e) => setNewStopNotes(e.target.value)}
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs"
+            />
+          </div>
         </div>
       </ResponsiveModal>
 
-      {/* OFFLINE REGION MANAGER MODAL */}
-      <ResponsiveModal open={downloadModalOpen} onOpenChange={setDownloadModalOpen} title="Offline Maps & Cache">
-        <div className="grid gap-4 p-1">
-          <div className="rounded-2xl border border-teal-500/30 bg-teal-500/10 p-3.5 text-xs text-teal-950 dark:text-teal-200">
-            <div className="font-bold flex items-center gap-1.5 mb-1">
-              <HardDrive className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-              <span>Genuine Offline Storage (IndexedDB)</span>
-            </div>
-            <div>
-              Pre-download map tiles for <span className="font-bold">{trip.destination}</span>. You can view maps, inspect stops,
-              and track live GPS location without Wi-Fi or cellular network data.
-            </div>
-          </div>
-
-          {/* STORAGE QUOTA METRICS */}
+      {/* OFFLINE REGION DOWNLOADER MODAL */}
+      <ResponsiveModal open={downloadModalOpen} onOpenChange={setDownloadModalOpen} title={t("offlineMaps")}>
+        <div className="space-y-4 p-1">
           {storageInfo && (
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-xl border border-border p-2.5 bg-card">
-                <div className="text-muted-foreground text-[10px] uppercase font-semibold">Available Storage</div>
-                <div className="font-bold text-foreground text-sm">
-                  {(storageInfo.availableBytes / (1024 * 1024)).toFixed(0)} MB
-                </div>
+            <div className="rounded-2xl border border-border/80 bg-secondary/40 p-3.5 text-xs space-y-1">
+              <div className="flex items-center justify-between font-semibold">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <HardDrive className="h-4 w-4" />
+                  {t("storageUsed")}
+                </span>
+                <span className="text-foreground">
+                  {(storageInfo.usedBytes / (1024 * 1024)).toFixed(1)} MB / {(storageInfo.quotaBytes / (1024 * 1024)).toFixed(0)} MB
+                </span>
               </div>
-              <div className="rounded-xl border border-border p-2.5 bg-card">
-                <div className="text-muted-foreground text-[10px] uppercase font-semibold">Storage Persistence</div>
-                <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
-                  {storageInfo.persistent ? "Protected" : "Browser Managed"}
-                </div>
+              <div className="text-[11px] text-muted-foreground">
+                IndexedDB offline tile storage. Persistent on mobile browsers.
               </div>
             </div>
           )}
 
-          {/* DOWNLOAD PROGRESS BAR */}
-          {isDownloading && downloadProgress && (
-            <div className="rounded-2xl border border-border bg-card p-3.5 space-y-2">
-              <div className="flex justify-between text-xs font-bold">
-                <span>Downloading tiles...</span>
-                <span>{downloadProgress.percent}%</span>
-              </div>
-              <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+          {downloadedRegions.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-foreground block">{t("offlineReady")}</span>
+              {downloadedRegions.map((reg) => (
                 <div
-                  className="h-full bg-teal-500 transition-all duration-200"
-                  style={{ width: `${downloadProgress.percent}%` }}
-                />
+                  key={reg.id}
+                  className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-xs"
+                >
+                  <div>
+                    <div className="font-bold text-foreground">{reg.name}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {reg.tileCount} tiles cached • {Math.round(reg.sizeBytes / 1024 / 1024)} MB
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteRegion(reg.id)}
+                    className="text-destructive hover:bg-destructive/10 h-8 w-8 p-0 rounded-lg"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {isDownloading ? (
+            <div className="rounded-2xl border border-teal-500/30 bg-teal-500/5 p-4 text-center space-y-3">
+              <RefreshCw className="mx-auto h-6 w-6 text-teal-600 animate-spin" />
+              <div>
+                <div className="font-bold text-sm text-foreground">{t("downloadingTiles")}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {downloadProgress?.completed} / {downloadProgress?.total} tiles (
+                  {downloadProgress?.percent}%)
+                </div>
               </div>
-              <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>
-                  {downloadProgress.completed} / {downloadProgress.total} tiles
-                </span>
-                <span>{(downloadProgress.bytesDownloaded / (1024 * 1024)).toFixed(2)} MB</span>
-              </div>
-              <Button onClick={handleCancelDownload} variant="outline" size="sm" className="w-full mt-2 text-xs">
-                Cancel Download
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleCancelDownload}
+                className="rounded-xl text-xs font-semibold"
+              >
+                {t("cancel")}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Download city map tiles for <span className="font-bold text-foreground">{trip.destination}</span> so your family can view road navigation even without mobile internet or Wi-Fi.
+              </p>
+              <Button
+                onClick={handleStartDownload}
+                className="w-full rounded-xl text-xs font-bold gap-2 py-2.5"
+              >
+                <DownloadCloud className="h-4 w-4" />
+                {t("downloadRegion")}
               </Button>
             </div>
           )}
-
-          {/* ACTION BUTTON */}
-          {!isDownloading && (
-            <Button
-              onClick={handleStartDownload}
-              className="w-full rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs"
-            >
-              <DownloadCloud className="h-4 w-4 mr-2" />
-              Download {trip.destination} Map Region (~12-18 MB)
-            </Button>
-          )}
-
-          {/* STORED REGIONS LIST */}
-          <div className="mt-2 space-y-2">
-            <div className="text-xs font-bold text-foreground">Stored Offline Regions</div>
-            {downloadedRegions.length === 0 ? (
-              <div className="text-xs text-muted-foreground py-2 italic">No offline regions saved yet.</div>
-            ) : (
-              downloadedRegions.map((reg) => (
-                <div key={reg.id} className="flex items-center justify-between rounded-xl border border-border p-2.5 bg-card text-xs">
-                  <div>
-                    <div className="font-semibold text-foreground">{reg.name}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {reg.tileCount} tiles • {(reg.sizeBytes / (1024 * 1024)).toFixed(2)} MB • {new Date(reg.downloadedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteRegion(reg.id)}
-                    className="p-1.5 text-destructive/70 hover:text-destructive"
-                    title="Delete Region"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
         </div>
       </ResponsiveModal>
     </div>

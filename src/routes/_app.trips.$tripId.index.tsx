@@ -16,6 +16,10 @@ import {
   CheckSquare,
   ArrowRight,
   DownloadCloud,
+  CheckCircle2,
+  ShieldAlert,
+  ShieldCheck,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +32,8 @@ import { setRsvp, updateTrip, archiveTrip, useAppState } from "@/lib/store";
 import { formatINR } from "@/lib/ledger";
 import { daysUntil, getParty, personName, tripLedger, tripStatus } from "@/lib/trips";
 import type { Rsvp } from "@/lib/types";
+import { DestinationWeatherCard } from "@/components/weather/DestinationWeatherCard";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/trips/$tripId/")({
   head: () => ({
@@ -49,12 +55,15 @@ const rsvpMeta: Record<Rsvp, { label: string; variant: "success" | "warning" | "
 };
 
 function TripOverview() {
+  const { t } = useTranslation();
   const { tripId } = Route.useParams();
   const state = useAppState();
   const [editing, setEditing] = useState(false);
+  const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const ledger = useMemo(() => tripLedger(state, tripId), [state, tripId]);
   const { trip } = ledger;
   const status = tripStatus(trip);
+  const isSuperAdmin = state.currentUser.role === "super_admin";
   const me = trip.participants.find((p) => p.partyId === state.currentUser.id);
   const budgetPct = trip.budget > 0 ? Math.round((ledger.total / trip.budget) * 100) : 0;
   const counts = trip.participants.reduce(
@@ -62,17 +71,51 @@ function TripOverview() {
     {} as Record<Rsvp, number>,
   );
 
-  const tripStopsCount = state.stops.filter((s) => s.tripId === tripId).length;
+  const tripStops = state.stops.filter((s) => s.tripId === tripId);
+  const tripStopsCount = tripStops.length;
   const tripActivitiesCount = state.activities.filter((a) => a.tripId === tripId).length;
   const tripChecklistCount = state.checklists.filter((c) => c.tripId === tripId).length;
+
+  const isCompleted = trip.archived || status === "completed";
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_340px] fade-up">
       <div className="grid gap-8">
+        {/* COMPLETED TRIP STATUS BANNER */}
+        {isCompleted && (
+          <div
+            className={cn(
+              "rounded-3xl border p-5 shadow-soft space-y-2",
+              isSuperAdmin
+                ? "border-purple-500/30 bg-purple-500/10 text-purple-900 dark:text-purple-200"
+                : "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200",
+            )}
+          >
+            <div className="flex items-center gap-2 font-bold text-sm">
+              {isSuperAdmin ? (
+                <>
+                  <ShieldCheck className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <span>{t("statusCompleted")} — Super Admin Full Access</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <span>{t("completedTripNotice")}</span>
+                </>
+              )}
+            </div>
+            <p className="text-xs opacity-90 leading-relaxed">
+              {isSuperAdmin
+                ? "As Super Admin, you retain full unredacted access to itemized expense ledgers, route stops, and sensitive notes."
+                : t("superAdminAccessOnly")}
+            </p>
+          </div>
+        )}
+
         {trip.description && <p className="text-base leading-relaxed text-foreground">{trip.description}</p>}
 
         {/* RSVP CARD */}
-        {me && status !== "completed" && (
+        {me && !isCompleted && (
           <div className="rounded-3xl border border-border/80 bg-card p-5 shadow-soft">
             <p className="font-bold text-foreground text-sm">Are you coming on this trip?</p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -117,7 +160,7 @@ function TripOverview() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground">Interactive Map</span>
+                  <span className="font-bold text-xs text-foreground">{t("navMap")}</span>
                   <span className="rounded-full bg-teal-500/15 px-2 py-0.5 text-[10px] font-bold text-teal-700 dark:text-teal-300">
                     Offline Ready
                   </span>
@@ -138,7 +181,7 @@ function TripOverview() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground">Day-by-Day Itinerary</span>
+                  <span className="font-bold text-xs text-foreground">{t("navItinerary")}</span>
                   <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -157,7 +200,7 @@ function TripOverview() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground">Selective Expenses</span>
+                  <span className="font-bold text-xs text-foreground">{t("navExpenses")}</span>
                   <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -176,7 +219,7 @@ function TripOverview() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-foreground">Travel Checklist</span>
+                  <span className="font-bold text-xs text-foreground">{t("navChecklist")}</span>
                   <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -219,10 +262,17 @@ function TripOverview() {
         </section>
       </div>
 
-      {/* ASIDE STATS & CONTROLS */}
+      {/* ASIDE STATS, WEATHER & CONTROLS */}
       <aside className="grid content-start gap-4">
+        {/* DESTINATION WEATHER CARD */}
+        <DestinationWeatherCard
+          destination={trip.destination}
+          lat={tripStops[0]?.lat}
+          lng={tripStops[0]?.lng}
+        />
+
         <StatCard
-          label="Spent so far"
+          label={t("totalTripSpent")}
           value={<Money paise={ledger.total} />}
           hint={trip.budget > 0 ? `of ${formatINR(trip.budget, { compact: true })} budget` : "No budget set"}
         />
@@ -230,7 +280,7 @@ function TripOverview() {
         {trip.budget > 0 && (
           <div className="rounded-3xl border border-border/80 bg-card p-5 shadow-soft space-y-2">
             <div className="flex justify-between text-xs">
-              <span className="font-bold text-muted-foreground">Budget Burn</span>
+              <span className="font-bold text-muted-foreground">{t("budgetUtilization")}</span>
               <span className={cn("tabular font-bold", budgetPct > 100 ? "text-destructive" : "text-foreground")}>
                 {budgetPct}%
               </span>
@@ -250,21 +300,39 @@ function TripOverview() {
           <p className="font-bold text-foreground mt-0.5">{personName(trip.organizerId)}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" onClick={() => setEditing(true)} className="rounded-xl text-xs font-semibold gap-1.5">
-            <Pencil className="h-3.5 w-3.5" /> Edit
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              archiveTrip(trip.id, !trip.archived);
-              toast.success(trip.archived ? "Trip restored" : "Trip archived");
-            }}
-            className="rounded-xl text-xs font-semibold gap-1.5"
-          >
-            {trip.archived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
-            {trip.archived ? "Restore" : "Archive"}
-          </Button>
+        {/* TRIP ACTIONS */}
+        <div className="space-y-2">
+          {!isCompleted && (
+            <Button
+              onClick={() => setCompleteModalOpen(true)}
+              className="w-full rounded-2xl font-bold text-xs gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {t("markAsCompleted")}
+            </Button>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              disabled={isCompleted && !isSuperAdmin}
+              onClick={() => setEditing(true)}
+              className="rounded-xl text-xs font-semibold gap-1.5"
+            >
+              <Pencil className="h-3.5 w-3.5" /> {t("edit")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                archiveTrip(trip.id, !trip.archived);
+                toast.success(trip.archived ? "Trip restored" : "Trip archived to history");
+              }}
+              className="rounded-xl text-xs font-semibold gap-1.5"
+            >
+              {trip.archived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+              {trip.archived ? t("reopenTrip") : "Archive"}
+            </Button>
+          </div>
         </div>
       </aside>
 
@@ -272,7 +340,7 @@ function TripOverview() {
       <ResponsiveModal open={editing} onOpenChange={setEditing} title="Edit Trip Details">
         <TripForm
           initial={trip}
-          submitLabel="Save Changes"
+          submitLabel={t("save")}
           onSubmit={(v) => {
             const existing = new Map(trip.participants.map((p) => [p.partyId, p.rsvp]));
             updateTrip({
@@ -289,6 +357,40 @@ function TripOverview() {
             setEditing(false);
           }}
         />
+      </ResponsiveModal>
+
+      {/* MARK AS COMPLETED MODAL */}
+      <ResponsiveModal
+        open={completeModalOpen}
+        onOpenChange={setCompleteModalOpen}
+        title={t("markCompletedConfirmTitle")}
+      >
+        <div className="space-y-4 p-1">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {t("markCompletedConfirmDesc")}
+          </p>
+
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 text-xs text-emerald-800 dark:text-emerald-200">
+            <strong>Next steps:</strong> All final balances will be preserved, and the trip will move into historical records.
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setCompleteModalOpen(false)} className="rounded-xl text-xs">
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                archiveTrip(trip.id, true);
+                setCompleteModalOpen(false);
+                toast.success("Trip marked as completed and preserved in history");
+              }}
+              className="rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {t("confirm")}
+            </Button>
+          </div>
+        </div>
       </ResponsiveModal>
     </div>
   );
