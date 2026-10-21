@@ -20,6 +20,7 @@ export const categoryIcons: Record<ExpenseCategory, typeof Bus> = {
   tickets: Ticket,
   fuel: Fuel,
   shopping: ShoppingBag,
+  groceries: ShoppingBag,
   other: MoreHorizontal,
 };
 
@@ -53,7 +54,7 @@ export function AddExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => voi
         category: "food",
         amount: "",
         date: todayISO() >= trip.startDate && todayISO() <= trip.endDate ? todayISO() : trip.startDate,
-        paidBy: partyIds.includes(CURRENT_USER_ID) ? CURRENT_USER_ID : partyIds[0],
+        paidBy: partyIds.includes(CURRENT_USER_ID) ? CURRENT_USER_ID : (partyIds[0] || ""),
         participants: partyIds,
         split: "equal",
         notes: "",
@@ -76,7 +77,7 @@ export function AddExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => voi
         paidBy: d.paidBy,
         participants: d.participants,
         splitMethod: d.split,
-        splitValues: d.split === "shares" ? Object.fromEntries(d.participants.map((id) => [id, getParty(id).headcount])) : undefined,
+        ...(d.split === "shares" ? { splitValues: Object.fromEntries(d.participants.map((id) => [id, getParty(id).headcount])) } : {}),
       });
     } catch {
       return null;
@@ -104,8 +105,8 @@ export function AddExpenseForm({ trip, onDone }: { trip: Trip; onDone: () => voi
       paidBy: d.paidBy,
       participants: d.participants,
       splitMethod: d.split,
-      splitValues: d.split === "shares" ? Object.fromEntries(d.participants.map((id) => [id, getParty(id).headcount])) : undefined,
-      notes: d.notes.trim() || undefined,
+      ...(d.split === "shares" ? { splitValues: Object.fromEntries(d.participants.map((id) => [id, getParty(id).headcount])) } : {}),
+      ...(d.notes.trim() ? { notes: d.notes.trim() } : {}),
       hasReceipt: !!receipt,
       createdBy: CURRENT_USER_ID,
       createdAt: new Date().toISOString(),

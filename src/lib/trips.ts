@@ -74,6 +74,7 @@ export const categoryLabel: Record<ExpenseCategory, string> = {
   tickets: "Tickets",
   fuel: "Fuel",
   shopping: "Shopping",
+  groceries: "Groceries",
   other: "Other",
 };
 

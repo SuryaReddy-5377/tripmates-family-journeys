@@ -15,7 +15,7 @@ export function RepaymentForm({ trip, suggestion, onDone }: { trip: Trip; sugges
   const ids = tripPartyIds(trip);
   const [requestId] = useState(() => newId("req"));
   const [from, setFrom] = useState(suggestion?.from ?? CURRENT_USER_ID);
-  const [to, setTo] = useState(suggestion?.to ?? ids.find((i) => i !== CURRENT_USER_ID) ?? ids[0]);
+  const [to, setTo] = useState(suggestion?.to ?? ids.find((i) => i !== CURRENT_USER_ID) ?? ids[0] ?? "");
   const [amount, setAmount] = useState(suggestion ? paiseToDecimalString(suggestion.amount) : "");
   const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState("");
@@ -34,7 +34,22 @@ export function RepaymentForm({ trip, suggestion, onDone }: { trip: Trip; sugges
     setSaving(true);
     await new Promise((r) => setTimeout(r, 300));
     try {
-      addSettlement({ id: newId("set"), tripId: trip.id, from, to, amount: paise, status, date, note: note.trim() || undefined, recordedBy: CURRENT_USER_ID }, requestId);
+      if (!from || !to) {
+        setError("Select both parties.");
+        setSaving(false);
+        return;
+      }
+      addSettlement({
+        id: newId("set"),
+        tripId: trip.id,
+        from,
+        to,
+        amount: paise,
+        status,
+        date,
+        ...(note.trim() ? { note: note.trim() } : {}),
+        recordedBy: CURRENT_USER_ID,
+      }, requestId);
       toast.success(status === "confirmed" ? "Repayment recorded" : "Repayment sent for confirmation", {
         description: `${getParty(from).name} → ${getParty(to).name}: ${formatINR(paise)}`,
       });

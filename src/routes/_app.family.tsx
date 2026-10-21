@@ -1,90 +1,199 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Copy, KeyRound, RefreshCw, ShieldCheck, UserPlus } from "lucide-react";
+import {
+  Copy,
+  KeyRound,
+  RefreshCw,
+  ShieldCheck,
+  UserPlus,
+  Building,
+  Check,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PartyAvatar, SampleBanner } from "@/components/app/bits";
-import { CURRENT_USER_ID, families, INVITE_CODE_PREVIEW, people } from "@/lib/sample-data";
-import type { Role } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { PartyAvatar } from "@/components/app/bits";
+import { useAppState, addMember } from "@/lib/store";
+import type { Person, Role } from "@/lib/types";
+import { ResponsiveModal } from "@/components/app/ResponsiveModal";
 
 export const Route = createFileRoute("/_app/family")({
   head: () => ({
     meta: [
-      { title: "Family — TripMates" },
-      { name: "description", content: "Family groups, members, roles and the invitation code." },
-      { property: "og:title", content: "Family — TripMates" },
-      { property: "og:description", content: "Family groups, members and roles." },
+      { title: "Family Members & Workspaces — TripMates 2.0" },
+      { name: "description", content: "Family workspaces, relatives, roles, and invitation codes." },
+      { property: "og:title", content: "Family Members — TripMates 2.0" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FamilyPage,
 });
 
 const roleMeta: Record<Role, { label: string; variant: "default" | "upcoming" | "secondary" }> = {
-  family_admin: { label: "Family admin", variant: "default" },
-  organizer: { label: "Trip organizer", variant: "upcoming" },
+  super_admin: { label: "Super Admin", variant: "default" },
+  family_admin: { label: "Family Admin", variant: "default" },
+  organizer: { label: "Trip Organizer", variant: "upcoming" },
   member: { label: "Member", variant: "secondary" },
 };
 
 function FamilyPage() {
-  const me = people.find((p) => p.id === CURRENT_USER_ID)!;
+  const { currentUser, families, people, activeFamilyId } = useAppState();
+  const currentFamily = families.find((f) => f.id === activeFamilyId) || families[0];
+
   const [revealed, setRevealed] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Invite modal
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRelation, setNewMemberRelation] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState<Role>("member");
+  const [targetFamilyId, setTargetFamilyId] = useState(currentFamily.id);
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(currentFamily.inviteCode);
+    setCopied(true);
+    toast.success("Family invite code copied to clipboard");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleAddMember = () => {
+    if (!newMemberName.trim() || !newMemberEmail.trim()) {
+      alert("Name and email are required");
+      return;
+    }
+    const id = newMemberName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const person: Person = {
+      id,
+      name: newMemberName.trim(),
+      email: newMemberEmail.trim(),
+      familyId: targetFamilyId,
+      role: newMemberRole,
+      relation: newMemberRelation.trim() || undefined,
+    };
+    addMember(person);
+    toast.success(`Added ${person.name} to family`);
+    setInviteModalOpen(false);
+    setNewMemberName("");
+    setNewMemberEmail("");
+    setNewMemberRelation("");
+  };
+
   return (
     <div className="grid gap-6 fade-up">
-      <div>
-        <h1 className="text-3xl font-semibold text-foreground">Family</h1>
-        <p className="text-sm text-muted-foreground">{people.length} members across {families.length} households (sample).</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground">Family Members</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {people.length} family members across {families.length} extended households
+          </p>
+        </div>
+        <Button onClick={() => setInviteModalOpen(true)} className="rounded-xl gap-2 font-bold text-xs">
+          <UserPlus className="h-4 w-4" />
+          Add Member
+        </Button>
       </div>
-      <SampleBanner />
 
-      {me.role === "family_admin" && (
-        <section className="hero-navy rounded-3xl p-5 shadow-card">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card/15">
-              <KeyRound className="h-5 w-5" aria-hidden />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">Invitation code</p>
-              <p className="text-sm opacity-85">Share privately. New members also need their own email and password — the code alone never grants access.</p>
-              <p className="mt-3 font-mono text-xl tracking-widest">{revealed ? "REDDY-7Q4M-26" : INVITE_CODE_PREVIEW}</p>
+      {/* INVITATION CODE CARD */}
+      <section className="rounded-3xl border border-teal-500/30 bg-gradient-to-br from-slate-900 via-primary to-slate-900 text-white p-6 shadow-card">
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-teal-300 shadow-soft">
+            <KeyRound className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-teal-300 uppercase tracking-wider">
+                {currentFamily.name} Invitation Code
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-1 max-w-xl">
+              Share this code privately with relatives so they can register and automatically link to your family workspace.
+            </p>
+            <div className="mt-3 font-mono text-2xl font-bold tracking-widest text-white">
+              {revealed ? currentFamily.inviteCode : "••••••••••••"}
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="sm" variant="onImage" onClick={() => setRevealed((r) => !r)}>{revealed ? "Hide" : "Reveal"}</Button>
-            <Button size="sm" variant="onImage" onClick={() => toast.message("Preview mode", { description: "Copying works once codes are stored securely (Phase 2)." })}><Copy /> Copy</Button>
-            <Button size="sm" variant="onImage" onClick={() => toast.message("Preview mode", { description: "Regenerating invalidates the old code — available in Phase 2." })}><RefreshCw /> Regenerate</Button>
-          </div>
-        </section>
-      )}
+        </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="mt-5 flex flex-wrap gap-2.5">
+          <Button
+            size="sm"
+            onClick={() => setRevealed((r) => !r)}
+            className="rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20"
+          >
+            {revealed ? "Hide Code" : "Reveal Code"}
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleCopyCode}
+            className="rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold text-xs gap-1.5"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copied ? "Copied!" : "Copy Code"}
+          </Button>
+        </div>
+      </section>
+
+      {/* HOUSEHOLDS LIST */}
+      <div className="grid gap-6 lg:grid-cols-2">
         {families.map((f) => {
           const members = people.filter((p) => p.familyId === f.id);
+          const isSelected = f.id === activeFamilyId;
           return (
-            <section key={f.id} className="rounded-3xl border bg-card p-4 shadow-soft">
-              <div className="mb-3 flex items-center justify-between">
+            <section
+              key={f.id}
+              className={cn(
+                "rounded-3xl border p-5 bg-card shadow-soft space-y-4",
+                isSelected ? "border-teal-500/50 ring-1 ring-teal-500/30" : "border-border/80",
+              )}
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-border/80">
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">{f.name}</h2>
-                  <p className="text-xs text-muted-foreground">{f.city} · {members.length} members</p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-bold text-base text-foreground">{f.name}</h2>
+                    {isSelected && (
+                      <span className="rounded-full bg-teal-500/20 text-teal-700 dark:text-teal-300 text-[10px] font-bold px-2 py-0.5">
+                        CURRENT
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {f.city} • {members.length} relatives
+                  </p>
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => toast.message("Preview mode", { description: "Inviting by email arrives in Phase 2." })}>
-                  <UserPlus /> Invite
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setTargetFamilyId(f.id);
+                    setInviteModalOpen(true);
+                  }}
+                  className="rounded-xl text-xs font-semibold gap-1.5"
+                >
+                  <UserPlus className="h-3.5 w-3.5" /> Add
                 </Button>
               </div>
-              <ul className="grid gap-1">
+
+              <ul className="space-y-2">
                 {members.map((p) => (
-                  <li key={p.id} className="flex min-h-14 items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-muted/60">
-                    <PartyAvatar id={p.id} />
+                  <li
+                    key={p.id}
+                    className="flex min-h-12 items-center gap-3 rounded-2xl border border-border/60 bg-secondary/20 px-3.5 py-2 hover:bg-secondary/40 transition-colors"
+                  >
+                    <PartyAvatar name={p.name} className="h-9 w-9 text-xs" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
+                      <p className="truncate text-xs font-bold text-foreground">
                         {p.name}
-                        {p.id === CURRENT_USER_ID && <span className="font-normal text-muted-foreground"> (you)</span>}
+                        {p.id === currentUser.id && <span className="font-normal text-muted-foreground"> (you)</span>}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">{p.relation ?? p.email}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">{p.relation ?? p.email}</p>
                     </div>
-                    <Badge variant={roleMeta[p.role].variant}>{roleMeta[p.role].label}</Badge>
+                    <Badge variant={roleMeta[p.role]?.variant || "secondary"} className="rounded-lg text-[10px] font-bold">
+                      {roleMeta[p.role]?.label || p.role}
+                    </Badge>
                   </li>
                 ))}
               </ul>
@@ -93,14 +202,103 @@ function FamilyPage() {
         })}
       </div>
 
-      <section className="rounded-2xl border bg-card p-4 text-sm">
-        <p className="mb-2 flex items-center gap-2 font-semibold text-foreground"><ShieldCheck className="h-4 w-4 text-success" /> What each role can do</p>
-        <ul className="grid gap-1 text-muted-foreground">
-          <li><strong className="text-foreground">Family admin</strong> — manages members, roles and the invitation code.</li>
-          <li><strong className="text-foreground">Trip organizer</strong> — creates trips, invites people, confirms repayments, corrects expenses.</li>
-          <li><strong className="text-foreground">Member</strong> — RSVPs, uploads photos, adds expenses and repayments on their trips.</li>
+      {/* ROLE PERMISSIONS EXPLANATION */}
+      <section className="rounded-3xl border border-border/80 bg-card p-5 text-xs shadow-soft space-y-2.5">
+        <div className="flex items-center gap-2 font-bold text-sm text-foreground">
+          <ShieldCheck className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+          <span>Role Permissions Matrix</span>
+        </div>
+        <ul className="grid gap-2 text-muted-foreground sm:grid-cols-2">
+          <li className="rounded-xl border border-border/60 p-2.5 bg-secondary/30">
+            <strong className="text-foreground block font-bold mb-0.5">Super Admin</strong>
+            Master console access, cross-family oversight, workspace suspension, and immutable ledger corrections.
+          </li>
+          <li className="rounded-xl border border-border/60 p-2.5 bg-secondary/30">
+            <strong className="text-foreground block font-bold mb-0.5">Family Admin</strong>
+            Manages family relatives, roles, workspace invite codes, and default preferences.
+          </li>
+          <li className="rounded-xl border border-border/60 p-2.5 bg-secondary/30">
+            <strong className="text-foreground block font-bold mb-0.5">Trip Organizer</strong>
+            Creates trips, invites participants, manages itineraries and route stops.
+          </li>
+          <li className="rounded-xl border border-border/60 p-2.5 bg-secondary/30">
+            <strong className="text-foreground block font-bold mb-0.5">Member</strong>
+            RSVPs to trips, views offline maps, records shared expenses, and settles repayments.
+          </li>
         </ul>
       </section>
+
+      {/* ADD MEMBER MODAL */}
+      <ResponsiveModal open={inviteModalOpen} onOpenChange={setInviteModalOpen} title="Add Family Relative">
+        <div className="grid gap-3.5 p-1 text-xs">
+          <div>
+            <label className="block font-semibold text-foreground mb-1">Full Name *</label>
+            <input
+              type="text"
+              value={newMemberName}
+              onChange={(e) => setNewMemberName(e.target.value)}
+              placeholder="e.g. Rohini Reddy"
+              className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-foreground mb-1">Email Address *</label>
+            <input
+              type="email"
+              value={newMemberEmail}
+              onChange={(e) => setNewMemberEmail(e.target.value)}
+              placeholder="e.g. rohini@example.com"
+              className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-foreground mb-1">Family Workspace</label>
+              <select
+                value={targetFamilyId}
+                onChange={(e) => setTargetFamilyId(e.target.value)}
+                className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
+              >
+                {families.map((fam) => (
+                  <option key={fam.id} value={fam.id}>
+                    {fam.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-foreground mb-1">Role</label>
+              <select
+                value={newMemberRole}
+                onChange={(e) => setNewMemberRole(e.target.value as Role)}
+                className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
+              >
+                <option value="member">Member</option>
+                <option value="organizer">Trip Organizer</option>
+                <option value="family_admin">Family Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-foreground mb-1">Relationship (optional)</label>
+            <input
+              type="text"
+              value={newMemberRelation}
+              onChange={(e) => setNewMemberRelation(e.target.value)}
+              placeholder="e.g. Cousin, Aunt, Grandfather"
+              className="w-full rounded-xl border border-input bg-background py-2 px-3 text-xs font-medium text-foreground"
+            />
+          </div>
+
+          <Button onClick={handleAddMember} className="w-full rounded-xl mt-2 font-bold text-xs">
+            Save Family Member
+          </Button>
+        </div>
+      </ResponsiveModal>
     </div>
   );
 }

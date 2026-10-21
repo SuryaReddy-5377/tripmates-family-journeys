@@ -12,14 +12,26 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as AppBudgetRouteImport } from './routes/_app.budget'
+import { Route as AppChecklistRouteImport } from './routes/_app.checklist'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppExpensesRouteImport } from './routes/_app.expenses'
 import { Route as AppFamilyRouteImport } from './routes/_app.family'
+import { Route as AppItineraryRouteImport } from './routes/_app.itinerary'
+import { Route as AppMapRouteImport } from './routes/_app.map'
 import { Route as AppMemoriesRouteImport } from './routes/_app.memories'
+import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppTripsIndexRouteImport } from './routes/_app.trips.index'
 import { Route as AppTripsTripIdRouteImport } from './routes/_app.trips.$tripId'
 import { Route as AppTripsNewRouteImport } from './routes/_app.trips.new'
 import { Route as AppTripsTripIdIndexRouteImport } from './routes/_app.trips.$tripId.index'
+import { Route as AppTripsTripIdBudgetRouteImport } from './routes/_app.trips.$tripId.budget'
+import { Route as AppTripsTripIdChecklistRouteImport } from './routes/_app.trips.$tripId.checklist'
 import { Route as AppTripsTripIdExpensesRouteImport } from './routes/_app.trips.$tripId.expenses'
+import { Route as AppTripsTripIdItineraryRouteImport } from './routes/_app.trips.$tripId.itinerary'
+import { Route as AppTripsTripIdMapRouteImport } from './routes/_app.trips.$tripId.map'
 import { Route as AppTripsTripIdPhotosRouteImport } from './routes/_app.trips.$tripId.photos'
 
 const IndexRoute = IndexRouteImport.update({
@@ -36,9 +48,29 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBudgetRoute = AppBudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChecklistRoute = AppChecklistRouteImport.update({
+  id: '/checklist',
+  path: '/checklist',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExpensesRoute = AppExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFamilyRoute = AppFamilyRouteImport.update({
@@ -46,9 +78,29 @@ const AppFamilyRoute = AppFamilyRouteImport.update({
   path: '/family',
   getParentRoute: () => AppRoute,
 } as any)
+const AppItineraryRoute = AppItineraryRouteImport.update({
+  id: '/itinerary',
+  path: '/itinerary',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMapRoute = AppMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMemoriesRoute = AppMemoriesRouteImport.update({
   id: '/memories',
   path: '/memories',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTripsIndexRoute = AppTripsIndexRouteImport.update({
@@ -71,9 +123,29 @@ const AppTripsTripIdIndexRoute = AppTripsTripIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppTripsTripIdRoute,
 } as any)
+const AppTripsTripIdBudgetRoute = AppTripsTripIdBudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
+const AppTripsTripIdChecklistRoute = AppTripsTripIdChecklistRouteImport.update({
+  id: '/checklist',
+  path: '/checklist',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
 const AppTripsTripIdExpensesRoute = AppTripsTripIdExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
+const AppTripsTripIdItineraryRoute = AppTripsTripIdItineraryRouteImport.update({
+  id: '/itinerary',
+  path: '/itinerary',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
+const AppTripsTripIdMapRoute = AppTripsTripIdMapRouteImport.update({
+  id: '/map',
+  path: '/map',
   getParentRoute: () => AppTripsTripIdRoute,
 } as any)
 const AppTripsTripIdPhotosRoute = AppTripsTripIdPhotosRouteImport.update({
@@ -85,25 +157,49 @@ const AppTripsTripIdPhotosRoute = AppTripsTripIdPhotosRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AppAdminRoute
+  '/budget': typeof AppBudgetRoute
+  '/checklist': typeof AppChecklistRoute
   '/dashboard': typeof AppDashboardRoute
+  '/expenses': typeof AppExpensesRoute
   '/family': typeof AppFamilyRoute
+  '/itinerary': typeof AppItineraryRoute
+  '/map': typeof AppMapRoute
   '/memories': typeof AppMemoriesRoute
+  '/notifications': typeof AppNotificationsRoute
+  '/settings': typeof AppSettingsRoute
   '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/trips/new': typeof AppTripsNewRoute
   '/trips/': typeof AppTripsIndexRoute
+  '/trips/$tripId/budget': typeof AppTripsTripIdBudgetRoute
+  '/trips/$tripId/checklist': typeof AppTripsTripIdChecklistRoute
   '/trips/$tripId/expenses': typeof AppTripsTripIdExpensesRoute
+  '/trips/$tripId/itinerary': typeof AppTripsTripIdItineraryRoute
+  '/trips/$tripId/map': typeof AppTripsTripIdMapRoute
   '/trips/$tripId/photos': typeof AppTripsTripIdPhotosRoute
   '/trips/$tripId/': typeof AppTripsTripIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AppAdminRoute
+  '/budget': typeof AppBudgetRoute
+  '/checklist': typeof AppChecklistRoute
   '/dashboard': typeof AppDashboardRoute
+  '/expenses': typeof AppExpensesRoute
   '/family': typeof AppFamilyRoute
+  '/itinerary': typeof AppItineraryRoute
+  '/map': typeof AppMapRoute
   '/memories': typeof AppMemoriesRoute
+  '/notifications': typeof AppNotificationsRoute
+  '/settings': typeof AppSettingsRoute
   '/trips/new': typeof AppTripsNewRoute
   '/trips': typeof AppTripsIndexRoute
+  '/trips/$tripId/budget': typeof AppTripsTripIdBudgetRoute
+  '/trips/$tripId/checklist': typeof AppTripsTripIdChecklistRoute
   '/trips/$tripId/expenses': typeof AppTripsTripIdExpensesRoute
+  '/trips/$tripId/itinerary': typeof AppTripsTripIdItineraryRoute
+  '/trips/$tripId/map': typeof AppTripsTripIdMapRoute
   '/trips/$tripId/photos': typeof AppTripsTripIdPhotosRoute
   '/trips/$tripId': typeof AppTripsTripIdIndexRoute
 }
@@ -112,13 +208,25 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/admin': typeof AppAdminRoute
+  '/_app/budget': typeof AppBudgetRoute
+  '/_app/checklist': typeof AppChecklistRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/expenses': typeof AppExpensesRoute
   '/_app/family': typeof AppFamilyRoute
+  '/_app/itinerary': typeof AppItineraryRoute
+  '/_app/map': typeof AppMapRoute
   '/_app/memories': typeof AppMemoriesRoute
+  '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/_app/trips/new': typeof AppTripsNewRoute
   '/_app/trips/': typeof AppTripsIndexRoute
+  '/_app/trips/$tripId/budget': typeof AppTripsTripIdBudgetRoute
+  '/_app/trips/$tripId/checklist': typeof AppTripsTripIdChecklistRoute
   '/_app/trips/$tripId/expenses': typeof AppTripsTripIdExpensesRoute
+  '/_app/trips/$tripId/itinerary': typeof AppTripsTripIdItineraryRoute
+  '/_app/trips/$tripId/map': typeof AppTripsTripIdMapRoute
   '/_app/trips/$tripId/photos': typeof AppTripsTripIdPhotosRoute
   '/_app/trips/$tripId/': typeof AppTripsTripIdIndexRoute
 }
@@ -127,25 +235,49 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
+    | '/budget'
+    | '/checklist'
     | '/dashboard'
+    | '/expenses'
     | '/family'
+    | '/itinerary'
+    | '/map'
     | '/memories'
+    | '/notifications'
+    | '/settings'
     | '/trips/$tripId'
     | '/trips/new'
     | '/trips/'
+    | '/trips/$tripId/budget'
+    | '/trips/$tripId/checklist'
     | '/trips/$tripId/expenses'
+    | '/trips/$tripId/itinerary'
+    | '/trips/$tripId/map'
     | '/trips/$tripId/photos'
     | '/trips/$tripId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/admin'
+    | '/budget'
+    | '/checklist'
     | '/dashboard'
+    | '/expenses'
     | '/family'
+    | '/itinerary'
+    | '/map'
     | '/memories'
+    | '/notifications'
+    | '/settings'
     | '/trips/new'
     | '/trips'
+    | '/trips/$tripId/budget'
+    | '/trips/$tripId/checklist'
     | '/trips/$tripId/expenses'
+    | '/trips/$tripId/itinerary'
+    | '/trips/$tripId/map'
     | '/trips/$tripId/photos'
     | '/trips/$tripId'
   id:
@@ -153,13 +285,25 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
+    | '/_app/admin'
+    | '/_app/budget'
+    | '/_app/checklist'
     | '/_app/dashboard'
+    | '/_app/expenses'
     | '/_app/family'
+    | '/_app/itinerary'
+    | '/_app/map'
     | '/_app/memories'
+    | '/_app/notifications'
+    | '/_app/settings'
     | '/_app/trips/$tripId'
     | '/_app/trips/new'
     | '/_app/trips/'
+    | '/_app/trips/$tripId/budget'
+    | '/_app/trips/$tripId/checklist'
     | '/_app/trips/$tripId/expenses'
+    | '/_app/trips/$tripId/itinerary'
+    | '/_app/trips/$tripId/map'
     | '/_app/trips/$tripId/photos'
     | '/_app/trips/$tripId/'
   fileRoutesById: FileRoutesById
@@ -193,11 +337,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/budget': {
+      id: '/_app/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof AppBudgetRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/checklist': {
+      id: '/_app/checklist'
+      path: '/checklist'
+      fullPath: '/checklist'
+      preLoaderRoute: typeof AppChecklistRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/expenses': {
+      id: '/_app/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof AppExpensesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/family': {
@@ -207,11 +379,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFamilyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/itinerary': {
+      id: '/_app/itinerary'
+      path: '/itinerary'
+      fullPath: '/itinerary'
+      preLoaderRoute: typeof AppItineraryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/map': {
+      id: '/_app/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof AppMapRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/memories': {
       id: '/_app/memories'
       path: '/memories'
       fullPath: '/memories'
       preLoaderRoute: typeof AppMemoriesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/trips/': {
@@ -242,11 +442,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTripsTripIdIndexRouteImport
       parentRoute: typeof AppTripsTripIdRoute
     }
+    '/_app/trips/$tripId/budget': {
+      id: '/_app/trips/$tripId/budget'
+      path: '/budget'
+      fullPath: '/trips/$tripId/budget'
+      preLoaderRoute: typeof AppTripsTripIdBudgetRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
+    '/_app/trips/$tripId/checklist': {
+      id: '/_app/trips/$tripId/checklist'
+      path: '/checklist'
+      fullPath: '/trips/$tripId/checklist'
+      preLoaderRoute: typeof AppTripsTripIdChecklistRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
     '/_app/trips/$tripId/expenses': {
       id: '/_app/trips/$tripId/expenses'
       path: '/expenses'
       fullPath: '/trips/$tripId/expenses'
       preLoaderRoute: typeof AppTripsTripIdExpensesRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
+    '/_app/trips/$tripId/itinerary': {
+      id: '/_app/trips/$tripId/itinerary'
+      path: '/itinerary'
+      fullPath: '/trips/$tripId/itinerary'
+      preLoaderRoute: typeof AppTripsTripIdItineraryRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
+    '/_app/trips/$tripId/map': {
+      id: '/_app/trips/$tripId/map'
+      path: '/map'
+      fullPath: '/trips/$tripId/map'
+      preLoaderRoute: typeof AppTripsTripIdMapRouteImport
       parentRoute: typeof AppTripsTripIdRoute
     }
     '/_app/trips/$tripId/photos': {
@@ -260,13 +488,21 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppTripsTripIdRouteChildren {
+  AppTripsTripIdBudgetRoute: typeof AppTripsTripIdBudgetRoute
+  AppTripsTripIdChecklistRoute: typeof AppTripsTripIdChecklistRoute
   AppTripsTripIdExpensesRoute: typeof AppTripsTripIdExpensesRoute
+  AppTripsTripIdItineraryRoute: typeof AppTripsTripIdItineraryRoute
+  AppTripsTripIdMapRoute: typeof AppTripsTripIdMapRoute
   AppTripsTripIdPhotosRoute: typeof AppTripsTripIdPhotosRoute
   AppTripsTripIdIndexRoute: typeof AppTripsTripIdIndexRoute
 }
 
 const AppTripsTripIdRouteChildren: AppTripsTripIdRouteChildren = {
+  AppTripsTripIdBudgetRoute: AppTripsTripIdBudgetRoute,
+  AppTripsTripIdChecklistRoute: AppTripsTripIdChecklistRoute,
   AppTripsTripIdExpensesRoute: AppTripsTripIdExpensesRoute,
+  AppTripsTripIdItineraryRoute: AppTripsTripIdItineraryRoute,
+  AppTripsTripIdMapRoute: AppTripsTripIdMapRoute,
   AppTripsTripIdPhotosRoute: AppTripsTripIdPhotosRoute,
   AppTripsTripIdIndexRoute: AppTripsTripIdIndexRoute,
 }
@@ -276,18 +512,34 @@ const AppTripsTripIdRouteWithChildren = AppTripsTripIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
+  AppBudgetRoute: typeof AppBudgetRoute
+  AppChecklistRoute: typeof AppChecklistRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppExpensesRoute: typeof AppExpensesRoute
   AppFamilyRoute: typeof AppFamilyRoute
+  AppItineraryRoute: typeof AppItineraryRoute
+  AppMapRoute: typeof AppMapRoute
   AppMemoriesRoute: typeof AppMemoriesRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppTripsTripIdRoute: typeof AppTripsTripIdRouteWithChildren
   AppTripsNewRoute: typeof AppTripsNewRoute
   AppTripsIndexRoute: typeof AppTripsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
+  AppBudgetRoute: AppBudgetRoute,
+  AppChecklistRoute: AppChecklistRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppExpensesRoute: AppExpensesRoute,
   AppFamilyRoute: AppFamilyRoute,
+  AppItineraryRoute: AppItineraryRoute,
+  AppMapRoute: AppMapRoute,
   AppMemoriesRoute: AppMemoriesRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppTripsTripIdRoute: AppTripsTripIdRouteWithChildren,
   AppTripsNewRoute: AppTripsNewRoute,
   AppTripsIndexRoute: AppTripsIndexRoute,
