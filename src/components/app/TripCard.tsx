@@ -18,15 +18,19 @@ export function TripCard({ trip, variant = "default", eager }: { trip: Trip; var
         variant === "feature" ? "aspect-[4/5] sm:aspect-[16/9]" : "aspect-[4/3]",
       )}
     >
-      <img
-        src={trip.cover}
-        alt=""
-        width={1280}
-        height={832}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-      />
+      {trip.cover ? (
+        <img
+          src={trip.cover}
+          alt=""
+          width={1280}
+          height={832}
+          loading={eager ? "eager" : "lazy"}
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+        />
+      ) : (
+        <div className="hero-navy absolute inset-0" />
+      )}
       <div className="image-scrim absolute inset-0" />
       <div className="absolute left-4 top-4 flex gap-2">
         <StatusBadge status={status} onImage />

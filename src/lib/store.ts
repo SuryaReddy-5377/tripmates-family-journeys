@@ -92,8 +92,19 @@ export function setRsvp(tripId: string, partyId: string, rsvp: Rsvp) {
 }
 
 export function addTrip(trip: Trip, requestId: string) {
+  if (!trip.name.trim()) throw new Error("Give the trip a name");
+  if (trip.endDate < trip.startDate) throw new Error("End date must be on or after the start date");
   guardDuplicate(requestId);
   set({ ...state, trips: [trip, ...state.trips] });
+}
+
+export function updateTrip(id: string, patch: Partial<Trip>) {
+  const current = state.trips.find((t) => t.id === id);
+  if (!current) throw new Error("Trip not found");
+  const next = { ...current, ...patch };
+  if (!next.name.trim()) throw new Error("Give the trip a name");
+  if (next.endDate < next.startDate) throw new Error("End date must be on or after the start date");
+  set({ ...state, trips: state.trips.map((t) => (t.id === id ? next : t)) });
 }
 
 export function addPhotos(photos: Photo[]) {
