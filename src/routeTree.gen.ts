@@ -13,6 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppTripsIndexRouteImport } from './routes/_app.trips.index'
+import { Route as AppTripsTripIdRouteImport } from './routes/_app.trips.$tripId'
+import { Route as AppTripsNewRouteImport } from './routes/_app.trips.new'
+import { Route as AppTripsTripIdIndexRouteImport } from './routes/_app.trips.$tripId.index'
+import { Route as AppTripsTripIdPhotosRouteImport } from './routes/_app.trips.$tripId.photos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,16 +38,50 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTripsIndexRoute = AppTripsIndexRouteImport.update({
+  id: '/trips/',
+  path: '/trips/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTripsTripIdRoute = AppTripsTripIdRouteImport.update({
+  id: '/trips/$tripId',
+  path: '/trips/$tripId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTripsNewRoute = AppTripsNewRouteImport.update({
+  id: '/trips/new',
+  path: '/trips/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTripsTripIdIndexRoute = AppTripsTripIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
+const AppTripsTripIdPhotosRoute = AppTripsTripIdPhotosRouteImport.update({
+  id: '/photos',
+  path: '/photos',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRoute
+  '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
+  '/trips/new': typeof AppTripsNewRoute
+  '/trips/': typeof AppTripsIndexRoute
+  '/trips/$tripId/photos': typeof AppTripsTripIdPhotosRoute
+  '/trips/$tripId/': typeof AppTripsTripIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRoute
+  '/trips/new': typeof AppTripsNewRoute
+  '/trips': typeof AppTripsIndexRoute
+  '/trips/$tripId/photos': typeof AppTripsTripIdPhotosRoute
+  '/trips/$tripId': typeof AppTripsTripIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,13 +89,43 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
+  '/_app/trips/new': typeof AppTripsNewRoute
+  '/_app/trips/': typeof AppTripsIndexRoute
+  '/_app/trips/$tripId/photos': typeof AppTripsTripIdPhotosRoute
+  '/_app/trips/$tripId/': typeof AppTripsTripIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/trips/$tripId'
+    | '/trips/new'
+    | '/trips/'
+    | '/trips/$tripId/photos'
+    | '/trips/$tripId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard'
-  id: '__root__' | '/' | '/_app' | '/auth' | '/_app/dashboard'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/trips/new'
+    | '/trips'
+    | '/trips/$tripId/photos'
+    | '/trips/$tripId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/_app/dashboard'
+    | '/_app/trips/$tripId'
+    | '/_app/trips/new'
+    | '/_app/trips/'
+    | '/_app/trips/$tripId/photos'
+    | '/_app/trips/$tripId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,15 +164,70 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/trips/': {
+      id: '/_app/trips/'
+      path: '/trips'
+      fullPath: '/trips/'
+      preLoaderRoute: typeof AppTripsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/trips/$tripId': {
+      id: '/_app/trips/$tripId'
+      path: '/trips/$tripId'
+      fullPath: '/trips/$tripId'
+      preLoaderRoute: typeof AppTripsTripIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/trips/new': {
+      id: '/_app/trips/new'
+      path: '/trips/new'
+      fullPath: '/trips/new'
+      preLoaderRoute: typeof AppTripsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/trips/$tripId/': {
+      id: '/_app/trips/$tripId/'
+      path: '/'
+      fullPath: '/trips/$tripId/'
+      preLoaderRoute: typeof AppTripsTripIdIndexRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
+    '/_app/trips/$tripId/photos': {
+      id: '/_app/trips/$tripId/photos'
+      path: '/photos'
+      fullPath: '/trips/$tripId/photos'
+      preLoaderRoute: typeof AppTripsTripIdPhotosRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
   }
 }
 
+interface AppTripsTripIdRouteChildren {
+  AppTripsTripIdPhotosRoute: typeof AppTripsTripIdPhotosRoute
+  AppTripsTripIdIndexRoute: typeof AppTripsTripIdIndexRoute
+}
+
+const AppTripsTripIdRouteChildren: AppTripsTripIdRouteChildren = {
+  AppTripsTripIdPhotosRoute: AppTripsTripIdPhotosRoute,
+  AppTripsTripIdIndexRoute: AppTripsTripIdIndexRoute,
+}
+
+const AppTripsTripIdRouteWithChildren = AppTripsTripIdRoute._addFileChildren(
+  AppTripsTripIdRouteChildren,
+)
+
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppTripsTripIdRoute: typeof AppTripsTripIdRouteWithChildren
+  AppTripsNewRoute: typeof AppTripsNewRoute
+  AppTripsIndexRoute: typeof AppTripsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppTripsTripIdRoute: AppTripsTripIdRouteWithChildren,
+  AppTripsNewRoute: AppTripsNewRoute,
+  AppTripsIndexRoute: AppTripsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
