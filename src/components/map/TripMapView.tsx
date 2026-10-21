@@ -38,6 +38,23 @@ interface TripMapViewProps {
   initialDownloadModal?: boolean;
 }
 
+// Helper to resolve coordinates for destinations if no stops are pinned yet
+function getDestinationCoords(destination: string): [number, number] {
+  const d = destination.toLowerCase();
+  if (d.includes("goa")) return [15.2993, 74.1240];
+  if (d.includes("kerala") || d.includes("kochi") || d.includes("munnar") || d.includes("alleppey")) return [9.9312, 76.2673];
+  if (d.includes("jaipur") || d.includes("rajasthan") || d.includes("udaipur")) return [26.9124, 75.7873];
+  if (d.includes("manali") || d.includes("himachal") || d.includes("shimla")) return [32.2432, 77.1892];
+  if (d.includes("hyderabad")) return [17.3850, 78.4867];
+  if (d.includes("bangalore") || d.includes("bengaluru")) return [12.9716, 77.5946];
+  if (d.includes("tirupati")) return [13.6288, 79.4192];
+  if (d.includes("vizag") || d.includes("visakhapatnam")) return [17.6868, 83.2185];
+  if (d.includes("delhi") || d.includes("agra")) return [28.6139, 77.2090];
+  if (d.includes("mumbai") || d.includes("pune") || d.includes("lonavala")) return [19.0760, 72.8777];
+  if (d.includes("ooty") || d.includes("kodaikanal")) return [11.4102, 76.6950];
+  return [26.9124, 75.7873];
+}
+
 // In-memory route cache to make switching between days instant (0ms delay)
 const osrmRouteCache = new Map<string, { distanceKm: string; durationMin: number; coordinates: [number, number][] }>();
 
@@ -108,23 +125,30 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
 
       // Default center on destination or stops
       const defaultCenter: [number, number] =
-        tripStops.length > 0 ? [tripStops[0].lat, tripStops[0].lng] : [26.9124, 75.7873]; // Jaipur fallback
+        tripStops.length > 0 ? [tripStops[0].lat, tripStops[0].lng] : getDestinationCoords(trip.destination);
 
       const map = L.map(mapContainerRef.current, {
         center: defaultCenter,
-        zoom: 13,
+        zoom: tripStops.length > 0 ? 13 : 11,
         zoomControl: false,
       });
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      // Custom offline-capable tile layer with CARTO / OSM attribution
-      const tileLayer = createOfflineTileLayer(L, CARTO_VOYAGER_URL);
+      // Standard OpenStreetMap tile layer (100% reliable, zero CORS issues)
+      const tileLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      });
       tileLayer.addTo(map);
 
       markersLayerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
       setMapReady(true);
+
+      // Force dimension recalculation so tiles load immediately
+      setTimeout(() => map.invalidateSize(), 150);
+      setTimeout(() => map.invalidateSize(), 500);
     }
 
     initLeaflet();
@@ -152,6 +176,17 @@ export function TripMapView({ trip, initialAddStop, initialDownloadModal }: Trip
 
     if (filteredStops.length === 0) {
       setRouteStats(null);
+      const destCoords = getDestinationCoords(trip.destination);
+      const destIcon = L.divIcon({
+        className: "custom-dest-pin",
+        html: `<div class="flex items-center justify-center h-8 w-8 rounded-full bg-teal-600 text-white font-bold shadow-lg ring-4 ring-teal-200 text-xs">★</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      const marker = L.marker(destCoords, { icon: destIcon });
+      marker.bindPopup(`<div class="p-2 text-slate-900 font-bold">${trip.destination}</div>`);
+      markersLayerRef.current.addLayer(marker);
+      map.setView(destCoords, 11);
       return;
     }
 

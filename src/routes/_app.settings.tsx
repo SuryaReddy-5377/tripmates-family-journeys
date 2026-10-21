@@ -24,6 +24,8 @@ import {
   setCurrentUser,
   switchActiveFamily,
   syncOfflineQueue,
+  clearAllDemoData,
+  restoreDemoData,
 } from "@/lib/store";
 import {
   checkStorageEstimate,
@@ -130,10 +132,15 @@ function SettingsRoute() {
 
       {/* LANGUAGE PREFERENCE CARD */}
       <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-soft space-y-4">
-        <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
-          <Languages className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-          <span>{t("languageSection")}</span>
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+            <Languages className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+            <span>{t("languageSection")} / భాషా ఎంపిక</span>
+          </h2>
+          <span className="rounded-full bg-teal-500/15 px-2.5 py-0.5 text-xs font-bold text-teal-700 dark:text-teal-300">
+            {lang === "te" ? "తెలుగు యాక్టివ్" : "English Active"}
+          </span>
+        </div>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {t("languageHelp")}
         </p>
@@ -146,25 +153,67 @@ function SettingsRoute() {
                 key={item.code}
                 onClick={() => {
                   setLanguage(item.code);
-                  toast.success(item.code === "te" ? "భాషను తెలుగుగా మార్చడం జరిగింది" : "Language set to English");
+                  toast.success(item.code === "te" ? "భాషను తెలుగుగా మార్చడం జరిగింది! (Telugu Activated)" : "Language set to English");
                 }}
                 className={cn(
                   "flex items-center justify-between rounded-2xl border p-4 text-left transition-all",
                   isSelected
-                    ? "border-primary bg-primary/10 ring-2 ring-primary/20 shadow-sm"
+                    ? "border-teal-500 bg-teal-500/10 ring-2 ring-teal-500/30 shadow-sm"
                     : "border-border/80 bg-secondary/30 hover:bg-secondary/60",
                 )}
               >
                 <div>
-                  <div className="font-bold text-sm text-foreground">{item.nativeName}</div>
-                  <div className="text-xs text-muted-foreground">{item.label}</div>
+                  <div className="font-bold text-base text-foreground">{item.nativeName}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{item.label}</div>
+                  <div className="text-[11px] text-teal-600 dark:text-teal-400 font-medium mt-1">
+                    {item.code === "te" ? "నమస్కారం! ట్రిప్‌మేట్స్ కి స్వాగతం" : "Hello! Welcome to TripMates"}
+                  </div>
                 </div>
                 {isSelected && (
-                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                  <CheckCircle2 className="h-6 w-6 text-teal-600 dark:text-teal-400 shrink-0" />
                 )}
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* DEMO DATA & FRESH START MANAGER */}
+      <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-soft space-y-4">
+        <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+          <Database className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+          <span>Demo Data Management (Jaipur, Kerala, Manali)</span>
+        </h2>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          The app was initialized with reference demo trips and expenses. You can wipe all demo data to start completely fresh with your own family journeys, or restore them anytime.
+        </p>
+
+        <div className="flex flex-wrap gap-3 pt-1">
+          <Button
+            variant="destructive"
+            onClick={() => {
+              if (confirm("Are you sure you want to clear all demo trips and start fresh? You can create your own real trips from scratch.")) {
+                clearAllDemoData();
+                toast.success("Demo trips cleared! You have a fresh clean slate.");
+              }
+            }}
+            className="rounded-xl text-xs font-bold gap-1.5"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Clear Demo Trips & Start Fresh
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => {
+              restoreDemoData();
+              toast.success("Sample trips restored!");
+            }}
+            className="rounded-xl text-xs font-bold gap-1.5"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Restore Sample Demo Trips
+          </Button>
         </div>
       </div>
 

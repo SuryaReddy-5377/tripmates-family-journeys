@@ -20,11 +20,13 @@ import {
   AlertTriangle,
   ChevronRight,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/app/TripCard";
 import { Money, PartyAvatar, StatCard } from "@/components/app/bits";
-import { useAppState } from "@/lib/store";
+import { useAppState, clearAllDemoData } from "@/lib/store";
 import { formatINR } from "@/lib/ledger";
 import { daysUntil, formatDateRange, tripLedger, tripStatus } from "@/lib/trips";
 import { cn } from "@/lib/utils";
@@ -115,6 +117,22 @@ function Dashboard() {
 
         {/* QUICK ACTION BUTTONS */}
         <div className="flex flex-wrap items-center gap-2">
+          {state.trips.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (confirm("Clear demo trips to start fresh with your own family journey?")) {
+                  clearAllDemoData();
+                  toast.success("Demo trips cleared! Create your first trip now.");
+                }
+              }}
+              className="rounded-2xl gap-1.5 font-bold text-xs bg-card hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+              Clear Demo Data
+            </Button>
+          )}
           <Button asChild className="rounded-2xl gap-2 font-bold text-xs shadow-soft">
             <Link to="/trips/new">
               <Plus className="h-4 w-4" />

@@ -320,6 +320,32 @@ export function removeTripParticipant(tripId: string, partyId: string) {
   });
 }
 
+export function clearAllDemoData() {
+  set({
+    ...state,
+    trips: [],
+    expenses: [],
+    settlements: [],
+    stops: [],
+    savedRoutes: [],
+    activities: [],
+    checklists: [],
+  });
+}
+
+export function restoreDemoData() {
+  set({
+    ...state,
+    trips: initialTrips,
+    expenses: initialExpenses,
+    settlements: initialSettlements,
+    stops: initialStops,
+    savedRoutes: initialSavedRoutes,
+    activities: initialActivities,
+    checklists: initialChecklists,
+  });
+}
+
 // ----------------- EXPENSES & SETTLEMENTS -----------------
 
 export function addExpense(expense: Expense, requestId?: string) {
