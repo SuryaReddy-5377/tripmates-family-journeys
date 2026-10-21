@@ -26,6 +26,7 @@ import {
   syncOfflineQueue,
   clearAllDemoData,
   restoreDemoData,
+  resetWorkspaceToClean,
 } from "@/lib/store";
 import {
   checkStorageEstimate,
@@ -428,6 +429,34 @@ function SettingsRoute() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* WORKSPACE DATA MAINTENANCE */}
+      <div className="rounded-3xl border border-border/80 bg-card p-6 shadow-soft space-y-4">
+        <h2 className="font-display text-base font-bold text-foreground flex items-center gap-2">
+          <Database className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+          <span>Workspace Maintenance</span>
+        </h2>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Reset workspace to clean production state. This purges any legacy demo data and keeps only the real Reddy Family circle ({currentFamily.name}, {currentFamily.city}).
+        </p>
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (confirm("Reset workspace to clean state? This removes legacy demo records.")) {
+                resetWorkspaceToClean();
+                toast.success("Workspace reset to clean Reddy Family circle!");
+              }
+            }}
+            className="rounded-xl text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 cursor-pointer"
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+            Reset to Clean Family State
+          </Button>
         </div>
       </div>
     </div>

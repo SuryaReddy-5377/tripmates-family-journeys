@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { paiseToDecimalString, parseRupeesToPaise } from "@/lib/ledger";
-import { families, parties } from "@/lib/sample-data";
+import { useAppState } from "@/lib/store";
 import type { Trip } from "@/lib/types";
 import { PartyAvatar } from "./bits";
 
@@ -29,6 +29,7 @@ export function TripForm({
   submitLabel: string;
   onSubmit: (v: TripFormValues) => Promise<void> | void;
 }) {
+  const { families, parties } = useAppState();
   const [name, setName] = useState(initial?.name ?? "");
   const [destination, setDestination] = useState(initial?.destination ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");

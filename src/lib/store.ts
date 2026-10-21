@@ -41,6 +41,7 @@ import type {
 
 export interface AppState {
   currentUser: User;
+  isAuthenticated: boolean;
   families: FamilyGroup[];
   activeFamilyId: string;
   people: Person[];
@@ -58,13 +59,72 @@ export interface AppState {
   pendingOfflineActionsCount: number;
 }
 
-const STORAGE_KEY = "tripmates_v2_store_data";
+export const SESSION_KEY = "tripmates_user_session";
+export const STORAGE_KEY = "tripmates_v2_2_clean_state";
+
+export const GUEST_USER: User = {
+  id: "guest",
+  name: "Guest Traveler",
+  email: "",
+  role: "member",
+  familyIds: [],
+  defaultFamilyId: "fam_reddy",
+  createdAt: new Date().toISOString(),
+};
+
+export function getSessionUser(): User | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && typeof u.id === "string" && u.id !== "guest") {
+        return u;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not read user session:", e);
+  }
+  return null;
+}
+
+export function loginUser(user: User) {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.warn("Could not write session:", e);
+    }
+  }
+  set({
+    ...state,
+    currentUser: user,
+    isAuthenticated: true,
+  });
+}
+
+export function logoutUser() {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch (e) {
+      console.warn("Could not clear session:", e);
+    }
+  }
+  set({
+    ...state,
+    currentUser: GUEST_USER,
+    isAuthenticated: false,
+  });
+}
 
 function getInitialState(): AppState {
+  const sessionUser = getSessionUser();
   return {
-    currentUser: CURRENT_USER,
+    currentUser: sessionUser || GUEST_USER,
+    isAuthenticated: sessionUser !== null,
     families: initialFamilies,
-    activeFamilyId: "reddy",
+    activeFamilyId: "fam_reddy",
     people: initialPeople,
     parties: initialParties,
     trips: initialTrips,
@@ -89,15 +149,28 @@ export function newId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// Hydrate from localStorage on client
+// Hydrate from localStorage on client with sanitization
 if (typeof window !== "undefined") {
   try {
+    // Purge old dirty key if it exists
+    localStorage.removeItem("tripmates_v2_store_data");
+
+    const sessionUser = getSessionUser();
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      // Sanitize: Purge legacy mock families like fam_rao, fam_kumar, fam_varma
+      const cleanFamilies = (parsed.families || []).filter(
+        (f: FamilyGroup) => f.id === "fam_reddy" || !f.id.match(/^fam_(rao|kumar|varma)/i),
+      );
+
       state = {
         ...getInitialState(),
         ...parsed,
+        currentUser: sessionUser || GUEST_USER,
+        isAuthenticated: sessionUser !== null,
+        families: cleanFamilies.length > 0 ? cleanFamilies : initialFamilies,
+        activeFamilyId: "fam_reddy",
         isOnline: navigator.onLine,
       };
     }
@@ -330,6 +403,21 @@ export function clearAllDemoData() {
     savedRoutes: [],
     activities: [],
     checklists: [],
+  });
+}
+
+export function resetWorkspaceToClean() {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem("tripmates_v2_store_data");
+    } catch {}
+  }
+  const sessionUser = getSessionUser();
+  set({
+    ...getInitialState(),
+    currentUser: sessionUser || GUEST_USER,
+    isAuthenticated: sessionUser !== null,
   });
 }
 

@@ -4,9 +4,11 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { TripForm } from "@/components/app/TripForm";
 import { addTrip, newId, useAppState } from "@/lib/store";
-import { CURRENT_USER_ID } from "@/lib/sample-data";
 
 export const Route = createFileRoute("/_app/trips/new")({
+  validateSearch: (s: Record<string, unknown>): { destination?: string } => ({
+    destination: typeof s.destination === "string" ? s.destination : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Plan New Trip — TripMates 2.0" },
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/_app/trips/new")({
 });
 
 function NewTrip() {
+  const { destination } = Route.useSearch();
   const navigate = useNavigate();
   const state = useAppState();
   const [requestId] = useState(() => newId("req"));
@@ -36,9 +39,11 @@ function NewTrip() {
       </div>
 
       <TripForm
+        initial={destination ? { destination, name: `${destination} Family Trip 2026` } : undefined}
         submitLabel="Create Trip"
         onSubmit={(v) => {
           const id = newId("trip");
+          const meId = state.currentUser.id || "surya";
           addTrip(
             {
               id,
@@ -50,11 +55,11 @@ function NewTrip() {
               endDate: v.endDate,
               budget: v.budget,
               cover: "",
-              organizerId: CURRENT_USER_ID,
+              organizerId: meId,
               archived: false,
               participants: v.participantIds.map((partyId) => ({
                 partyId,
-                rsvp: partyId === CURRENT_USER_ID ? "going" : "invited",
+                rsvp: partyId === meId ? "going" : "invited",
               })),
             },
             requestId,

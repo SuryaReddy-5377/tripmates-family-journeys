@@ -1,7 +1,3 @@
-import goa from "@/assets/trip-goa.jpg";
-import kerala from "@/assets/trip-kerala.jpg";
-import jaipur from "@/assets/trip-jaipur.jpg";
-import manali from "@/assets/trip-manali.jpg";
 import type {
   Expense,
   FamilyGroup,
@@ -21,490 +17,82 @@ import type {
 export const CURRENT_USER: User = {
   id: "surya",
   name: "Surya Reddy",
-  email: "surya.reddy@example.com",
+  email: "surya.reddy@gmail.com",
   role: "super_admin",
   phone: "+91 98765 43210",
-  familyIds: ["reddy", "rao"],
-  defaultFamilyId: "reddy",
-  createdAt: "2025-01-15T10:00:00Z",
+  familyIds: ["fam_reddy"],
+  defaultFamilyId: "fam_reddy",
+  createdAt: "2026-01-01T10:00:00Z",
 };
 
 export const CURRENT_USER_ID = CURRENT_USER.id;
 
+// Single real family circle: Reddy Family (Hyderabad)
 export const families: FamilyGroup[] = [
-  { id: "reddy", name: "Reddy Family", city: "Hyderabad", inviteCode: "REDDY2026", adminId: "surya", memberCount: 7, createdAt: "2025-01-10T00:00:00Z" },
-  { id: "rao", name: "Rao Family", city: "Bengaluru", inviteCode: "RAO2026", adminId: "kiran", memberCount: 6, createdAt: "2025-01-12T00:00:00Z" },
-  { id: "kumar", name: "Kumar Family", city: "Chennai", inviteCode: "KUMAR2026", adminId: "arjun", memberCount: 6, createdAt: "2025-01-14T00:00:00Z" },
-  { id: "varma", name: "Varma Family", city: "Visakhapatnam", inviteCode: "VARMA2026", adminId: "sneha", memberCount: 6, createdAt: "2025-01-16T00:00:00Z" },
+  {
+    id: "fam_reddy",
+    name: "Reddy Family",
+    city: "Hyderabad",
+    inviteCode: "REDDY2026",
+    adminId: "surya",
+    memberCount: 1,
+    createdAt: "2026-01-01T00:00:00Z",
+  },
 ];
 
-/** ~25 family members & relatives across 4 extended families */
 export const people: Person[] = [
-  // Reddy Family (Hyderabad)
-  { id: "surya", name: "Surya Reddy", email: "surya@example.com", familyId: "reddy", role: "super_admin", relation: "Self / Admin" },
-  { id: "lakshmi", name: "Lakshmi Reddy", email: "lakshmi@example.com", familyId: "reddy", role: "family_admin", relation: "Spouse" },
-  { id: "ramesh", name: "Ramesh Reddy", email: "ramesh@example.com", familyId: "reddy", role: "organizer", relation: "Father" },
-  { id: "padma", name: "Padma Reddy", email: "padma@example.com", familyId: "reddy", role: "member", relation: "Mother" },
-  { id: "siddharth", name: "Siddharth Reddy", email: "sid@example.com", familyId: "reddy", role: "member", relation: "Brother" },
-  { id: "bhavna", name: "Bhavna Reddy", email: "bhavna@example.com", familyId: "reddy", role: "member", relation: "Sister-in-law" },
-  { id: "sai", name: "Sai Reddy", email: "sai@example.com", familyId: "reddy", role: "member", relation: "Cousin" },
-
-  // Rao Family (Bengaluru)
-  { id: "kiran", name: "Kiran Rao", email: "kiran@example.com", familyId: "rao", role: "family_admin", relation: "Brother-in-law" },
-  { id: "divya", name: "Divya Rao", email: "divya@example.com", familyId: "rao", role: "member", relation: "Sister" },
-  { id: "mohan", name: "Mohan Rao", email: "mohan@example.com", familyId: "rao", role: "member", relation: "Uncle" },
-  { id: "shailaja", name: "Shailaja Rao", email: "shailaja@example.com", familyId: "rao", role: "member", relation: "Aunt" },
-  { id: "rohit", name: "Rohit Rao", email: "rohit@example.com", familyId: "rao", role: "member", relation: "Nephew" },
-  { id: "pooja", name: "Pooja Rao", email: "pooja@example.com", familyId: "rao", role: "member", relation: "Niece" },
-
-  // Kumar Family (Chennai)
-  { id: "arjun", name: "Arjun Kumar", email: "arjun@example.com", familyId: "kumar", role: "family_admin", relation: "Cousin" },
-  { id: "meena", name: "Meena Kumar", email: "meena@example.com", familyId: "kumar", role: "member", relation: "Cousin-in-law" },
-  { id: "vikram", name: "Vikram Kumar", email: "vikram@example.com", familyId: "kumar", role: "member", relation: "Uncle" },
-  { id: "priya", name: "Priya Kumar", email: "priya@example.com", familyId: "kumar", role: "member", relation: "Cousin" },
-  { id: "aditya", name: "Aditya Kumar", email: "aditya@example.com", familyId: "kumar", role: "member", relation: "Nephew" },
-  { id: "kavita", name: "Kavita Kumar", email: "kavita@example.com", familyId: "kumar", role: "member", relation: "Aunt" },
-
-  // Varma Family (Visakhapatnam)
-  { id: "sneha", name: "Sneha Varma", email: "sneha@example.com", familyId: "varma", role: "family_admin", relation: "Cousin" },
-  { id: "rahul", name: "Rahul Varma", email: "rahul@example.com", familyId: "varma", role: "member", relation: "Cousin" },
-  { id: "ananya", name: "Ananya Varma", email: "ananya@example.com", familyId: "varma", role: "member", relation: "Niece" },
-  { id: "rajesh", name: "Rajesh Varma", email: "rajesh@example.com", familyId: "varma", role: "member", relation: "Uncle" },
-  { id: "geetha", name: "Geetha Varma", email: "geetha@example.com", familyId: "varma", role: "member", relation: "Aunt" },
-  { id: "nikhil", name: "Nikhil Varma", email: "nikhil@example.com", familyId: "varma", role: "member", relation: "Cousin" },
+  {
+    id: "surya",
+    name: "Surya Reddy",
+    email: "surya.reddy@gmail.com",
+    familyId: "fam_reddy",
+    role: "super_admin",
+    relation: "Self / Admin",
+  },
 ];
 
 export const parties: Party[] = [
-  ...people.map((p) => ({
-    id: p.id,
-    kind: "person" as const,
-    name: p.name,
-    familyId: p.familyId,
+  {
+    id: "surya",
+    kind: "person",
+    name: "Surya Reddy",
+    familyId: "fam_reddy",
     headcount: 1,
-    relation: p.relation,
-  })),
-  { id: "fam-rao", kind: "family", name: "Rao Family (4)", familyId: "rao", headcount: 4 },
-  { id: "fam-varma", kind: "family", name: "Varma Family (3)", familyId: "varma", headcount: 3 },
-  { id: "fam-kumar", kind: "family", name: "Kumar Family (3)", familyId: "kumar", headcount: 3 },
-];
-
-const P = (id: string, rsvp: Trip["participants"][number]["rsvp"] = "going", role: "organizer" | "attendee" = "attendee") => ({
-  partyId: id,
-  rsvp,
-  role,
-});
-
-export const initialTrips: Trip[] = [
-  {
-    id: "rajasthan-2026",
-    familyId: "reddy",
-    name: "Rajasthan Heritage Week",
-    destination: "Jaipur & Amer, Rajasthan",
-    description: "Forts, bazaars, and traditional Rajasthani dinner at Chokhi Dhani. Base at heritage haveli.",
-    startDate: "2026-11-15",
-    endDate: "2026-11-22",
-    budget: 35000000, // ₹3,50,000
-    cover: jaipur,
-    organizerId: "ramesh",
-    archived: false,
-    participants: [
-      P("surya", "going", "organizer"),
-      P("lakshmi", "going"),
-      P("ramesh", "going", "organizer"),
-      P("padma", "going"),
-      P("kiran", "going"),
-      P("divya", "going"),
-      P("arjun", "going"),
-      P("meena", "going"),
-      P("siddharth", "maybe"),
-      P("sneha", "declined"),
-    ],
-    createdAt: "2025-08-01T10:00:00Z",
-  },
-  {
-    id: "manali-2026",
-    familyId: "reddy",
-    name: "New Year in the Snow",
-    destination: "Manali & Solang, Himachal Pradesh",
-    description: "Cottages near Old Manali, a day trip to Solang Valley snow park, and bonfire on New Year's Eve.",
-    startDate: "2026-12-28",
-    endDate: "2027-01-03",
-    budget: 45000000, // ₹4,50,000
-    cover: manali,
-    organizerId: "arjun",
-    archived: false,
-    participants: [
-      P("surya", "going"),
-      P("lakshmi", "going"),
-      P("arjun", "going", "organizer"),
-      P("meena", "going"),
-      P("vikram", "maybe"),
-      P("kiran", "invited"),
-      P("divya", "invited"),
-      P("rahul", "going"),
-    ],
-    createdAt: "2025-09-10T12:00:00Z",
-  },
-  {
-    id: "kerala-2026",
-    familyId: "reddy",
-    name: "Kerala Backwaters & Hills",
-    destination: "Alleppey & Munnar, Kerala",
-    description: "Two nights on a luxury private houseboat in Vembanad lake, then tea estate exploration in Munnar.",
-    startDate: "2026-04-10",
-    endDate: "2026-04-16",
-    budget: 28000000, // ₹2,80,000
-    cover: kerala,
-    organizerId: "kiran",
-    archived: false,
-    participants: [
-      P("surya", "going"),
-      P("lakshmi", "going"),
-      P("kiran", "going", "organizer"),
-      P("divya", "going"),
-      P("ramesh", "going"),
-      P("padma", "going"),
-    ],
-    createdAt: "2025-03-01T08:00:00Z",
-  },
-  {
-    id: "goa-2025",
-    familyId: "reddy",
-    name: "Goa Christmas Getaway",
-    destination: "South Goa",
-    description: "Beach villa in Palolem for the whole gang. Fully settled with wonderful seafood feasts.",
-    startDate: "2025-12-22",
-    endDate: "2025-12-28",
-    budget: 24000000, // ₹2,40,000
-    cover: goa,
-    organizerId: "surya",
-    archived: true,
-    participants: [
-      P("surya", "going", "organizer"),
-      P("lakshmi", "going"),
-      P("arjun", "going"),
-      P("meena", "going"),
-      P("kiran", "going"),
-      P("divya", "going"),
-    ],
-    createdAt: "2025-10-01T15:00:00Z",
+    relation: "Self",
   },
 ];
 
-export const initialExpenses: Expense[] = [
-  {
-    id: "exp-hotel-jaipur",
-    tripId: "rajasthan-2026",
-    description: "Heritage Haveli booking deposit (4 rooms, 4 nights)",
-    category: "accommodation",
-    amount: 12000000, // ₹1,20,000.00
-    paidBy: "ramesh",
-    participants: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya", "arjun", "meena"],
-    splitMethod: "equal",
-    date: "2026-10-10",
-    notes: "Direct booking confirmation with Haveli manager. 8 people equal share.",
-    createdBy: "ramesh",
-    createdAt: "2026-10-10T11:00:00Z",
-  },
-  {
-    id: "exp-van-jaipur",
-    tripId: "rajasthan-2026",
-    description: "Tempo Traveller rental with chauffeur (7 days)",
-    category: "transport",
-    amount: 4200000, // ₹42,000.00
-    paidBy: "surya",
-    participants: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya", "arjun", "meena"],
-    splitMethod: "equal",
-    date: "2026-10-12",
-    notes: "Includes fuel, toll charges, and driver allowance.",
-    createdBy: "surya",
-    createdAt: "2026-10-12T14:30:00Z",
-  },
-  {
-    id: "exp-chokhi-dhani",
-    tripId: "rajasthan-2026",
-    description: "Chokhi Dhani Royal Thali & Cultural Village Entry",
-    category: "food",
-    amount: 960000, // ₹9,600.00 (₹1,200/person for 8 people)
-    paidBy: "arjun",
-    participants: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya", "arjun", "meena"],
-    splitMethod: "equal",
-    date: "2026-10-16",
-    notes: "Special cultural show tickets included.",
-    createdBy: "arjun",
-    createdAt: "2026-10-16T21:00:00Z",
-  },
-  {
-    id: "exp-amer-guide",
-    tripId: "rajasthan-2026",
-    description: "Amer Fort private historian guide & sound-light show",
-    category: "tickets",
-    amount: 480000, // ₹4,800.00
-    paidBy: "kiran",
-    participants: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya"],
-    splitMethod: "equal",
-    date: "2026-10-17",
-    notes: "Arjun and Meena stayed back at hotel for shopping, so 6 participants only.",
-    createdBy: "kiran",
-    createdAt: "2026-10-17T17:00:00Z",
-  },
-  {
-    id: "exp-sweets",
-    tripId: "rajasthan-2026",
-    description: "LMB Johari Bazaar - Ghewar & Pyaaz Kachori",
-    category: "food",
-    amount: 320000, // ₹3,200.00
-    paidBy: "surya",
-    participants: ["surya", "lakshmi", "ramesh", "padma"],
-    splitMethod: "equal",
-    date: "2026-10-18",
-    notes: "Traditional sweets for Reddy family relatives.",
-    createdBy: "surya",
-    createdAt: "2026-10-18T16:00:00Z",
-  },
-];
-
-export const initialSettlements: Settlement[] = [
-  {
-    id: "stl-1",
-    tripId: "rajasthan-2026",
-    from: "surya",
-    to: "ramesh",
-    amount: 1500000, // ₹15,000.00
-    status: "confirmed",
-    date: "2026-10-15",
-    note: "UPI payment to Nanna for haveli advance",
-    recordedBy: "surya",
-    createdAt: "2026-10-15T18:00:00Z",
-  },
-];
-
-export const initialStops: RouteStop[] = [
-  {
-    id: "stop-1",
-    tripId: "rajasthan-2026",
-    dayNumber: 1,
-    order: 1,
-    name: "Jaipur Airport (JAI)",
-    address: "Airport Rd, Sanganer, Jaipur, Rajasthan 302029",
-    lat: 26.8286,
-    lng: 75.8056,
-    plannedArrival: "10:30",
-    estimatedDurationMinutes: 45,
-    notes: "Pick up family arriving from Hyderabad and Bengaluru.",
-  },
-  {
-    id: "stop-2",
-    tripId: "rajasthan-2026",
-    dayNumber: 1,
-    order: 2,
-    name: "Alsisar Haveli",
-    address: "Sansar Chandra Rd, Shri Ram Colony, Sindhi Camp, Jaipur",
-    lat: 26.9248,
-    lng: 75.8015,
-    plannedArrival: "12:00",
-    estimatedDurationMinutes: 90,
-    notes: "Check-in, unpack and lunch at courtyard.",
-  },
-  {
-    id: "stop-3",
-    tripId: "rajasthan-2026",
-    dayNumber: 1,
-    order: 3,
-    name: "Hawa Mahal & Johari Bazaar",
-    address: "Hawa Mahal Rd, Badi Choupad, J.D.A. Market, Jaipur",
-    lat: 26.9239,
-    lng: 75.8267,
-    plannedArrival: "16:00",
-    estimatedDurationMinutes: 150,
-    notes: "Sunset views, photo shoot from Wind View Cafe, and textile shopping.",
-  },
-  {
-    id: "stop-4",
-    tripId: "rajasthan-2026",
-    dayNumber: 2,
-    order: 1,
-    name: "Amer Fort (Amber Palace)",
-    address: "Devisinghpura, Amer, Jaipur, Rajasthan 302001",
-    lat: 26.9855,
-    lng: 75.8513,
-    plannedArrival: "09:00",
-    estimatedDurationMinutes: 240,
-    notes: "Sheesh Mahal mirror palace and elephant path.",
-  },
-  {
-    id: "stop-5",
-    tripId: "rajasthan-2026",
-    dayNumber: 2,
-    order: 2,
-    name: "Jal Mahal (Water Palace Viewpoint)",
-    address: "Amer Rd, Jal Mahal, Amber, Jaipur, Rajasthan 302002",
-    lat: 26.9534,
-    lng: 75.8462,
-    plannedArrival: "14:30",
-    estimatedDurationMinutes: 45,
-    notes: "Scenic lake photography stop on the way back from Amer.",
-  },
-  {
-    id: "stop-6",
-    tripId: "rajasthan-2026",
-    dayNumber: 2,
-    order: 3,
-    name: "Chokhi Dhani Resort",
-    address: "12 Miles Tonk Road, Via Vatika, Jaipur, Rajasthan 303905",
-    lat: 26.7663,
-    lng: 75.8362,
-    plannedArrival: "18:00",
-    estimatedDurationMinutes: 210,
-    notes: "Rajasthani folk dance, puppet show, camel rides, and Royal Thali feast.",
-  },
-];
-
-export const initialSavedRoutes: SavedRoute[] = [
-  {
-    id: "route-jaipur-day1",
-    tripId: "rajasthan-2026",
-    name: "Day 1: Arrival & Old City Circuit",
-    travelMode: "driving",
-    totalDistanceMeters: 22400,
-    totalDurationSeconds: 2700,
-    stops: initialStops.filter((s) => s.dayNumber === 1),
-    geometryCoordinates: [
-      [26.8286, 75.8056],
-      [26.875, 75.803],
-      [26.9248, 75.8015],
-      [26.9239, 75.8267],
-    ],
-  },
-  {
-    id: "route-jaipur-day2",
-    tripId: "rajasthan-2026",
-    name: "Day 2: Amer Fort & Chokhi Dhani Extravaganza",
-    travelMode: "driving",
-    totalDistanceMeters: 48600,
-    totalDurationSeconds: 5400,
-    stops: initialStops.filter((s) => s.dayNumber === 2),
-    geometryCoordinates: [
-      [26.9248, 75.8015],
-      [26.9855, 75.8513],
-      [26.9534, 75.8462],
-      [26.7663, 75.8362],
-    ],
-  },
-];
-
-export const initialActivities: ItineraryActivity[] = [
-  {
-    id: "act-1",
-    tripId: "rajasthan-2026",
-    date: "2026-11-15",
-    startTime: "10:30",
-    endTime: "11:30",
-    title: "Flight Arrival & Van Rendezvous",
-    location: "Jaipur Airport Terminal 2",
-    lat: 26.8286,
-    lng: 75.8056,
-    notes: "All luggage loaded in tempo traveller. Meet driver Mr. Vikram.",
-    bookingRef: "6E-542 / QP-1304",
-    bookingStatus: "confirmed",
-    assignedPartyIds: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya"],
-    estimatedDurationMinutes: 60,
-    estimatedCostPaise: 0,
-    completed: true,
-  },
-  {
-    id: "act-2",
-    tripId: "rajasthan-2026",
-    date: "2026-11-15",
-    startTime: "12:00",
-    endTime: "14:00",
-    title: "Haveli Check-in & Welcome Lunch",
-    location: "Alsisar Haveli",
-    lat: 26.9248,
-    lng: 75.8015,
-    notes: "Traditional aarti and welcome drink in inner courtyard.",
-    bookingRef: "ALS-2026-884",
-    bookingStatus: "confirmed",
-    assignedPartyIds: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya", "arjun", "meena"],
-    estimatedDurationMinutes: 120,
-    estimatedCostPaise: 12000000,
-    completed: true,
-  },
-  {
-    id: "act-3",
-    tripId: "rajasthan-2026",
-    date: "2026-11-15",
-    startTime: "16:00",
-    endTime: "19:00",
-    title: "Hawa Mahal & Johari Bazaar Walk",
-    location: "Hawa Mahal Rd",
-    lat: 26.9239,
-    lng: 75.8267,
-    notes: "Evening light on pink sandstone. Try pyaaz kachori at Rawat Mishtan Bhandar.",
-    bookingStatus: "none",
-    assignedPartyIds: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya", "arjun", "meena"],
-    estimatedDurationMinutes: 180,
-    estimatedCostPaise: 350000,
-    completed: false,
-  },
-  {
-    id: "act-4",
-    tripId: "rajasthan-2026",
-    date: "2026-11-16",
-    startTime: "09:00",
-    endTime: "13:30",
-    title: "Amer Palace Exploration & Sheesh Mahal",
-    location: "Amer Fort",
-    lat: 26.9855,
-    lng: 75.8513,
-    notes: "Guided tour with ASI certified guide. Wear comfortable walking shoes.",
-    bookingRef: "ASI-JPR-2026",
-    bookingStatus: "confirmed",
-    assignedPartyIds: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya"],
-    estimatedDurationMinutes: 270,
-    estimatedCostPaise: 480000,
-    completed: false,
-  },
-  {
-    id: "act-5",
-    tripId: "rajasthan-2026",
-    date: "2026-11-16",
-    startTime: "18:00",
-    endTime: "22:00",
-    title: "Chokhi Dhani Royal Dinner & Folk Night",
-    location: "Chokhi Dhani Resort",
-    lat: 26.7663,
-    lng: 75.8362,
-    notes: "Pre-booked traditional chaupal seating. Family group photo spot.",
-    bookingRef: "CKD-1192",
-    bookingStatus: "confirmed",
-    assignedPartyIds: ["surya", "lakshmi", "ramesh", "padma", "kiran", "divya", "arjun", "meena"],
-    estimatedDurationMinutes: 240,
-    estimatedCostPaise: 960000,
-    completed: false,
-  },
-];
-
-export const initialChecklists: ChecklistItem[] = [
-  { id: "chk-1", tripId: "rajasthan-2026", category: "tickets", title: "Flight tickets booked for all 8 members", completed: true, assignedPartyId: "surya", dueDate: "2026-10-01" },
-  { id: "chk-2", tripId: "rajasthan-2026", category: "hotel", title: "Haveli reservation confirmed with early check-in", completed: true, assignedPartyId: "ramesh", dueDate: "2026-10-15" },
-  { id: "chk-3", tripId: "rajasthan-2026", category: "vehicle", title: "12-seater AC tempo traveller locked with chauffeur Vikram", completed: true, assignedPartyId: "surya", dueDate: "2026-10-20" },
-  { id: "chk-4", tripId: "rajasthan-2026", category: "identification", title: "Aadhaar cards & ID copies photocopied for fort permits", completed: true, assignedPartyId: "padma", dueDate: "2026-11-10" },
-  { id: "chk-5", tripId: "rajasthan-2026", category: "medicines", title: "First-aid kit: pain relievers, ORS sachets, personal prescription meds", completed: false, assignedPartyId: "lakshmi", dueDate: "2026-11-12" },
-  { id: "chk-6", tripId: "rajasthan-2026", category: "luggage", title: "Light warm shawl / jacket for cool desert evenings", completed: false, assignedPartyId: "divya", dueDate: "2026-11-14" },
-  { id: "chk-7", tripId: "rajasthan-2026", category: "electronics", title: "Camera memory cards emptied and 20,000mAh power banks charged", completed: false, assignedPartyId: "kiran", dueDate: "2026-11-14" },
-  { id: "chk-8", tripId: "rajasthan-2026", category: "snacks", title: "Dry fruit snack packs & water bottles for van journeys", completed: false, assignedPartyId: "meena", dueDate: "2026-11-14" },
-  { id: "chk-9", tripId: "rajasthan-2026", category: "payments", title: "Keep ₹20,000 cash for bazaar street vendors & temple offerings", completed: false, assignedPartyId: "ramesh", dueDate: "2026-11-14" },
-];
+// Clean start: No fake demo trips or random expenses
+export const initialTrips: Trip[] = [];
+export const initialExpenses: Expense[] = [];
+export const initialSettlements: Settlement[] = [];
+export const initialStops: RouteStop[] = [];
+export const initialSavedRoutes: SavedRoute[] = [];
+export const initialActivities: ItineraryActivity[] = [];
+export const initialChecklists: ChecklistItem[] = [];
 
 export const initialAuditLogs: AuditLog[] = [
-  { id: "aud-1", timestamp: "2026-10-10T11:00:00Z", actorId: "ramesh", actorName: "Ramesh Reddy", action: "create_expense", entityType: "expense", entityId: "exp-hotel-jaipur", details: "Added Haveli deposit of ₹1,20,000 split equally among 8 participants.", tripId: "rajasthan-2026" },
-  { id: "aud-2", timestamp: "2026-10-12T14:30:00Z", actorId: "surya", actorName: "Surya Reddy", action: "create_expense", entityType: "expense", entityId: "exp-van-jaipur", details: "Added tempo traveller rental of ₹42,000.", tripId: "rajasthan-2026" },
-  { id: "aud-3", timestamp: "2026-10-15T18:00:00Z", actorId: "surya", actorName: "Surya Reddy", action: "record_settlement", entityType: "settlement", entityId: "stl-1", details: "Recorded repayment of ₹15,000 from Surya Reddy to Ramesh Reddy.", tripId: "rajasthan-2026" },
+  {
+    id: "audit_1",
+    timestamp: new Date().toISOString(),
+    actorId: "surya",
+    actorName: "Surya Reddy",
+    action: "create_family",
+    entityType: "family",
+    entityId: "fam_reddy",
+    details: "Initialized Reddy Family workspace in Hyderabad",
+  },
 ];
 
 export const initialNotifications: AppNotification[] = [
-  { id: "notif-1", userId: "surya", title: "Rajasthan Trip Coming Up", message: "Your trip to Jaipur begins in 25 days! Remember to check weather and download offline maps.", type: "info", read: false, createdAt: "2026-10-21T09:00:00Z", linkTo: "/trips/rajasthan-2026" },
-  { id: "notif-2", userId: "surya", title: "Haveli Booking Settled", message: "Ramesh Reddy recorded Haveli deposit. Your assigned share is ₹15,000.", type: "balance", read: false, createdAt: "2026-10-10T11:05:00Z", linkTo: "/trips/rajasthan-2026/expenses" },
-  { id: "notif-3", userId: "surya", title: "New Checklist Item Assigned", message: "You were assigned 'Flight tickets booked' for Rajasthan Heritage Week.", type: "success", read: true, createdAt: "2026-10-01T10:00:00Z", linkTo: "/trips/rajasthan-2026/checklist" },
+  {
+    id: "notif_1",
+    userId: "surya",
+    title: "Welcome to TripMates 2.0",
+    message: "Your private family travel workspace is ready. Create your first trip to get started!",
+    type: "info",
+    read: false,
+    createdAt: new Date().toISOString(),
+    linkTo: "/trips/new",
+  },
 ];

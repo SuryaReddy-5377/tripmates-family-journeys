@@ -24,9 +24,11 @@ import {
   Clock,
   Sparkles,
   DownloadCloud,
+  LogOut,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useAppState, switchActiveFamily, syncOfflineQueue } from "@/lib/store";
+import { useAppState, switchActiveFamily, syncOfflineQueue, logoutUser } from "@/lib/store";
 import { ResponsiveModal } from "./ResponsiveModal";
 import { PartyAvatar } from "./bits";
 import { useTranslation } from "@/lib/i18n";
@@ -182,9 +184,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const { currentUser, families, activeFamilyId, notifications, isOnline, pendingOfflineActionsCount, trips } = useAppState();
 
+  const navigate = useNavigate();
   const currentFamily = families.find((f) => f.id === activeFamilyId) || families[0];
   const unreadNotifs = notifications.filter((n) => !n.read).length;
   const activeTrip = trips.filter((t) => !t.archived)[0];
+
+  const handleSignOut = () => {
+    logoutUser();
+    toast.success("Signed out successfully");
+    navigate({ to: "/auth" });
+  };
 
   const handleSync = async () => {
     setSyncing(true);
@@ -199,7 +208,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/dashboard", label: t("navDashboard"), icon: Home },
     { to: "/trips", label: t("navTrips"), icon: Compass },
     {
-      to: activeTrip ? `/trips/${activeTrip.id}/map` : "/trips",
+      to: "/map",
       label: t("navMap"),
       icon: MapPinned,
       badge: "Offline",
@@ -359,6 +368,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </Link>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            title={t("navSignOut") || "Sign Out"}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </aside>
 
@@ -462,13 +479,26 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <div className="text-xs text-muted-foreground capitalize">{currentUser.role.replace("_", " ")}</div>
                 </div>
               </div>
-              <Link
-                to="/settings"
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground"
-              >
-                {t("navSettings")}
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary"
+                >
+                  {t("navSettings")}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  title="Sign Out"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -503,7 +533,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
 
         <Link
-          to={activeTrip ? (`/trips/${activeTrip.id}/map` as any) : "/trips"}
+          to="/map"
           className="flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           activeProps={{ className: "text-primary font-bold" }}
         >
