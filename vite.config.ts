@@ -30,6 +30,8 @@ export default defineConfig({
       ],
     },
     server: {
+      host: true,
+      port: 3000,
       warmup: {
         clientFiles: [
           "./src/routes/__root.tsx",
@@ -42,10 +44,13 @@ export default defineConfig({
         ],
       },
     },
+    preview: {
+      host: true,
+      port: 3000,
+    },
     build: {
       target: "esnext",
       cssMinify: true,
-      minify: "esbuild",
       rollupOptions: {
         output: {
           manualChunks(id) {
